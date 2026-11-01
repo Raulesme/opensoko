@@ -1,5 +1,6 @@
 import './style.css';
-import { Game, parseLevel } from './game';
+import { browserAudioContext, Sfx } from './audio/sfx';
+import { DIRECTION_DELTAS, Game, parseLevel } from './game';
 import type { Direction } from './game';
 import { attachInput } from './input/attach';
 import type { Action } from './input/actions';
@@ -8,6 +9,7 @@ import { isFinished, makeMoveAnimation, MOVE_MS } from './render/animation';
 import type { MoveAnimation } from './render/animation';
 import { Renderer } from './render/renderer';
 import { loadAtlas } from './render/sprites';
+import { loadSettings, saveSettings } from './storage/settings';
 import {
   browserStorage,
   loadProgress,
@@ -20,6 +22,20 @@ const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) 
 
 const storage = browserStorage();
 let progress = loadProgress(storage);
+const settings = loadSettings(storage);
+const sfx = new Sfx(browserAudioContext, settings.muted);
+
+function renderMuteButton(): void {
+  $('mute').textContent = `Sound: ${sfx.muted ? 'off' : 'on'} (M)`;
+}
+
+function toggleMute(): void {
+  sfx.setMuted(!sfx.muted);
+  settings.muted = sfx.muted;
+  saveSettings(storage, settings);
+  renderMuteButton();
+  sfx.play('step'); // audible confirmation when turning sound back on
+}
 
 const canvas = $<HTMLCanvasElement>('game');
 const renderer = new Renderer(canvas, await loadAtlas());
@@ -141,6 +157,7 @@ function nextLevel(): void {
 }
 
 function handle(action: Action): void {
+  if (action.type === 'mute') return toggleMute();
   if (view !== 'play' || !game) return;
   if (action.type === 'menu') return showMenu();
   stopAnimation(); // a new input snaps any slide in progress to its end
@@ -149,6 +166,13 @@ function handle(action: Action): void {
     facing = action.dir; // turn to face the move even when blocked
     const playerFrom = game.playerIndex;
     const result = game.move(action.dir);
+    if (!result.moved) sfx.play('bump');
+    else if (!result.pushed) sfx.play('step');
+    else {
+      const d = DIRECTION_DELTAS[action.dir];
+      const boxTo = game.playerIndex + d.y * game.level.width + d.x;
+      sfx.play(game.level.goals[boxTo] ? 'goal' : 'push');
+    }
     if (result.moved && !reducedMotion.matches) {
       anim = makeMoveAnimation({
         now: performance.now(),
@@ -161,13 +185,22 @@ function handle(action: Action): void {
       });
       rafId = requestAnimationFrame(tick);
     }
-  } else if (action.type === 'undo') game.undo();
-  else game.restart();
-  if (!wasWon && game.isWon) onWin(game);
+  } else if (action.type === 'undo') {
+    if (game.undo()) sfx.play('undo');
+  } else {
+    game.restart();
+    sfx.play('restart');
+  }
+  if (!wasWon && game.isWon) {
+    onWin(game);
+    sfx.play('win');
+  }
   refresh();
 }
 
 attachInput($('stage'), handle);
+$('mute').addEventListener('click', toggleMute);
+renderMuteButton();
 $('menu').addEventListener('click', () => handle({ type: 'menu' }));
 $('undo').addEventListener('click', () => handle({ type: 'undo' }));
 $('restart').addEventListener('click', () => handle({ type: 'restart' }));

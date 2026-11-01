@@ -14,6 +14,7 @@ describe('keyToAction', () => {
     expect(keyToAction('Backspace')).toEqual({ type: 'undo' });
     expect(keyToAction('r')).toEqual({ type: 'restart' });
     expect(keyToAction('Escape')).toEqual({ type: 'menu' });
+    expect(keyToAction('m')).toEqual({ type: 'mute' });
   });
 
   it('ignores unknown keys', () => {

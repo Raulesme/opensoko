@@ -16,7 +16,7 @@ npm run build    # typecheck + production build into dist/
 
 ## Controls
 
-Arrows / WASD move, Z undo, R restart, Esc menu. On touch screens, swipe to move.
+Arrows / WASD move, Z undo, R restart, Esc menu, M mute. On touch screens, swipe to move.
 Best moves and pushes per level are saved in your browser's localStorage.
 
 ## Level generator
@@ -32,6 +32,12 @@ npm run levels:pack -- --in picks.json --out src/levels/generated.ts --seeds "21
 ```
 
 The current pack (35 generated levels after 5 hand-made intro levels) came from seeds 21-24.
+
+## Sound
+
+Sound effects are synthesised in the browser with the Web Audio API (`src/audio/`), so there are no
+audio files or licences to track. Each sound is plain data in `src/audio/sounds.ts`: tweak a
+frequency, length or gain there to change how it sounds. Mute state is saved in localStorage.
 
 ## Tech
 

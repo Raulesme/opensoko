@@ -1,7 +1,11 @@
 import type { Direction } from '../game';
 
 export type Action =
-  { type: 'move'; dir: Direction } | { type: 'undo' } | { type: 'restart' } | { type: 'menu' };
+  | { type: 'move'; dir: Direction }
+  | { type: 'undo' }
+  | { type: 'restart' }
+  | { type: 'menu' }
+  | { type: 'mute' };
 
 const KEY_ACTIONS: Readonly<Record<string, Action>> = {
   ArrowUp: { type: 'move', dir: 'up' },
@@ -16,7 +20,7 @@ const KEY_ACTIONS: Readonly<Record<string, Action>> = {
   Backspace: { type: 'undo' },
   r: { type: 'restart' },
   Escape: { type: 'menu' },
-  m: { type: 'menu' },
+  m: { type: 'mute' },
 };
 
 /** Map a KeyboardEvent.key value to a game action (letters are case-insensitive). */
