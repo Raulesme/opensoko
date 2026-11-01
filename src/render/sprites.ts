@@ -19,7 +19,12 @@ export interface SpriteAtlas {
   goal: HTMLImageElement;
   box: HTMLImageElement;
   boxOnGoal: HTMLImageElement;
+  /** Idle player sprite per facing direction. */
   player: Readonly<Record<Direction, HTMLImageElement>>;
+  /** Walk-cycle frames per direction. */
+  walk: Readonly<Record<Direction, readonly HTMLImageElement[]>>;
+  /** Push-cycle frames per direction; falls back to the walk cycle when absent. */
+  push: Readonly<Record<Direction, readonly HTMLImageElement[]>>;
 }
 
 function load(url: string): Promise<HTMLImageElement> {
@@ -29,6 +34,40 @@ function load(url: string): Promise<HTMLImageElement> {
     img.onerror = () => reject(new Error(`Failed to load sprite: ${url}`));
     img.src = url;
   });
+}
+
+const COMPASS_TO_DIRECTION: Readonly<Record<string, Direction>> = {
+  north: 'up',
+  south: 'down',
+  west: 'left',
+  east: 'right',
+};
+
+/** Every animation frame under assets/sprites/{walk,push}/<compass>/frame_NNN.png. */
+const FRAME_URLS = import.meta.glob('../assets/sprites/{walk,push}/*/*.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+
+async function loadFrames(kind: 'walk' | 'push'): Promise<Record<Direction, HTMLImageElement[]>> {
+  const found: Record<Direction, { n: number; url: string }[]> = {
+    up: [],
+    down: [],
+    left: [],
+    right: [],
+  };
+  for (const [path, url] of Object.entries(FRAME_URLS)) {
+    const m = /\/(walk|push)\/(north|south|east|west)\/frame_(\d+)\.png$/.exec(path);
+    if (!m || m[1] !== kind) continue;
+    found[COMPASS_TO_DIRECTION[m[2]!]!].push({ n: Number(m[3]), url });
+  }
+  const out = { up: [], down: [], left: [], right: [] } as Record<Direction, HTMLImageElement[]>;
+  for (const dir of Object.keys(found) as Direction[]) {
+    found[dir].sort((a, b) => a.n - b.n);
+    out[dir] = await Promise.all(found[dir].map((f) => load(f.url)));
+  }
+  return out;
 }
 
 /** Load every sprite once. Resolves when all images are decoded and ready to draw. */
@@ -44,5 +83,6 @@ export async function loadAtlas(): Promise<SpriteAtlas> {
     load(playerWestUrl),
     load(playerEastUrl),
   ]);
-  return { floor, wall, goal, box, boxOnGoal, player: { up, down, left, right } };
+  const [walk, push] = await Promise.all([loadFrames('walk'), loadFrames('push')]);
+  return { floor, wall, goal, box, boxOnGoal, player: { up, down, left, right }, walk, push };
 }

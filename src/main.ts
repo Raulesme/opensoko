@@ -4,6 +4,8 @@ import type { Direction } from './game';
 import { attachInput } from './input/attach';
 import type { Action } from './input/actions';
 import { BUILTIN_LEVELS } from './levels/builtin';
+import { isFinished, makeMoveAnimation, MOVE_MS } from './render/animation';
+import type { MoveAnimation } from './render/animation';
 import { Renderer } from './render/renderer';
 import { loadAtlas } from './render/sprites';
 import {
@@ -26,12 +28,36 @@ let view: 'menu' | 'play' = 'menu';
 let levelIndex = 0;
 let game: Game | null = null;
 let facing: Direction = 'down';
+let anim: MoveAnimation | null = null;
+let rafId = 0;
+
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+/** Redraw every frame while a move is sliding; stop (and show the win overlay) when it ends. */
+function tick(now: number): void {
+  rafId = 0;
+  if (!anim) return;
+  if (isFinished(anim, now)) {
+    anim = null;
+    refresh();
+    return;
+  }
+  renderer.draw(facing, anim, now);
+  rafId = requestAnimationFrame(tick);
+}
+
+function stopAnimation(): void {
+  anim = null;
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = 0;
+}
 
 function persist(): void {
   saveProgress(storage, progress);
 }
 
 function showMenu(): void {
+  stopAnimation();
   view = 'menu';
   $('play').hidden = true;
   $('select').hidden = false;
@@ -71,6 +97,7 @@ function showMenu(): void {
 }
 
 function startLevel(index: number): void {
+  stopAnimation();
   levelIndex = index;
   const entry = BUILTIN_LEVELS[index]!;
   game = new Game(parseLevel(entry.text));
@@ -87,11 +114,12 @@ function startLevel(index: number): void {
 
 function refresh(): void {
   if (!game) return;
-  renderer.draw(facing);
+  renderer.draw(facing, anim, performance.now());
   $('level').textContent = `Level ${levelIndex + 1}/${BUILTIN_LEVELS.length}`;
   $('moves').textContent = `Moves: ${game.moves}`;
   $('pushes').textContent = `Pushes: ${game.pushes}`;
-  $('win').hidden = !game.isWon;
+  // Hold the win overlay back until the last move has finished sliding.
+  $('win').hidden = !game.isWon || anim !== null;
   $('next').textContent = levelIndex + 1 < BUILTIN_LEVELS.length ? 'Next level' : 'Back to menu';
 }
 
@@ -115,10 +143,24 @@ function nextLevel(): void {
 function handle(action: Action): void {
   if (view !== 'play' || !game) return;
   if (action.type === 'menu') return showMenu();
+  stopAnimation(); // a new input snaps any slide in progress to its end
   const wasWon = game.isWon;
   if (action.type === 'move') {
     facing = action.dir; // turn to face the move even when blocked
-    game.move(action.dir);
+    const playerFrom = game.playerIndex;
+    const result = game.move(action.dir);
+    if (result.moved && !reducedMotion.matches) {
+      anim = makeMoveAnimation({
+        now: performance.now(),
+        duration: MOVE_MS,
+        dir: action.dir,
+        width: game.level.width,
+        playerFrom,
+        playerTo: game.playerIndex,
+        pushed: result.pushed,
+      });
+      rafId = requestAnimationFrame(tick);
+    }
   } else if (action.type === 'undo') game.undo();
   else game.restart();
   if (!wasWon && game.isWon) onWin(game);

@@ -1,5 +1,7 @@
 import { reachableFloor } from '../game';
 import type { Direction, Game } from '../game';
+import { cellXY, frameIndex, progress, slidePosition } from './animation';
+import type { MoveAnimation } from './animation';
 import { TILE } from './sprites';
 import type { SpriteAtlas } from './sprites';
 
@@ -42,7 +44,8 @@ export class Renderer {
     this.canvas.style.height = `${Math.round(this.canvas.height * scale)}px`;
   }
 
-  draw(facing: Direction = 'down'): void {
+  /** Draw the board. While `anim` is set the player (and any pushed box) slide between cells. */
+  draw(facing: Direction = 'down', anim: MoveAnimation | null = null, now = 0): void {
     const game = this.game;
     if (!game) return;
     const { level } = game;
@@ -58,17 +61,29 @@ export class Renderer {
       }
       if (!this.floor[i]) continue; // void outside the walls
       ctx.drawImage(level.goals[i] ? atlas.goal : atlas.floor, px, py);
-      if (game.hasBoxAt(i)) ctx.drawImage(level.goals[i] ? atlas.boxOnGoal : atlas.box, px, py);
+      // A pushed box is drawn separately while it slides.
+      if (game.hasBoxAt(i) && !(anim?.box && anim.box.to === i)) {
+        ctx.drawImage(level.goals[i] ? atlas.boxOnGoal : atlas.box, px, py);
+      }
     }
 
-    const p = game.playerIndex;
-    const sprite = atlas.player[facing];
-    // The player sprite's canvas is larger than a tile; centre it on the cell.
+    const t = anim ? progress(anim, now) : 1;
+    if (anim?.box) {
+      const b = slidePosition(anim.box.from, anim.box.to, level.width, t);
+      ctx.drawImage(atlas.box, Math.round(b.x * TILE), Math.round(b.y * TILE));
+    }
+
+    let sprite = atlas.player[facing];
+    let pos = cellXY(game.playerIndex, level.width);
+    if (anim) {
+      pos = slidePosition(anim.playerFrom, anim.playerTo, level.width, t);
+      const cycle = anim.box && atlas.push[anim.dir].length > 0 ? atlas.push : atlas.walk;
+      const frames = cycle[anim.dir];
+      if (frames.length > 0) sprite = frames[frameIndex(t, frames.length)]!;
+    }
+    // Sprite canvases can be larger than a tile (and differ per frame); centre them on the cell.
     const inset = (TILE - sprite.width) / 2;
-    ctx.drawImage(
-      sprite,
-      (p % level.width) * TILE + inset,
-      Math.floor(p / level.width) * TILE + inset,
-    );
+    const insetY = (TILE - sprite.height) / 2;
+    ctx.drawImage(sprite, Math.round(pos.x * TILE + inset), Math.round(pos.y * TILE + insetY));
   }
 }
