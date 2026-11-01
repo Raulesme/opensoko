@@ -39,4 +39,125 @@ export const BUILTIN_LEVELS: readonly LevelEntry[] = [
 ########
 `,
   },
+  {
+    id: 'builtin-4',
+    name: 'Corner Turn',
+    text: `
+######
+#@   #
+# $  #
+#    #
+#  . #
+######
+`,
+  },
+  {
+    id: 'builtin-5',
+    name: 'Pocket',
+    text: `
+########
+#  #   #
+#  $ . #
+# @$ . #
+#  #   #
+########
+`,
+  },
+  {
+    id: 'builtin-6',
+    name: 'Side by Side',
+    text: `
+#######
+#     #
+# $ $ #
+#  @  #
+# . . #
+#######
+`,
+  },
+  {
+    id: 'builtin-7',
+    name: 'Wide Hall',
+    text: `
+##########
+#        #
+#   $$   #
+# @      #
+#   ..   #
+##########
+`,
+  },
+  {
+    id: 'builtin-8',
+    name: 'Alcove',
+    text: `
+#######
+#  .  #
+#  #  #
+# $$  #
+# @ . #
+#######
+`,
+  },
+  {
+    id: 'builtin-9',
+    name: 'Swap Room',
+    text: `
+########
+#  .   #
+# $#$  #
+#  @ . #
+########
+`,
+  },
+  {
+    id: 'builtin-10',
+    name: 'The Ring',
+    text: `
+########
+#      #
+# #### #
+# #. . #
+#@$ $# #
+#      #
+########
+`,
+  },
+  {
+    id: 'builtin-11',
+    name: 'Narrow Pass',
+    text: `
+#########
+#   #   #
+# $ # . #
+#@  $ . #
+#   #   #
+#########
+`,
+  },
+  {
+    id: 'builtin-12',
+    name: 'Doorway',
+    text: `
+#########
+#   #   #
+# $ # . #
+#   $ . #
+# @ #   #
+#########
+`,
+  },
+  {
+    id: 'builtin-13',
+    name: 'Three Crates',
+    text: `
+#########
+#       #
+# $ $ $ #
+#   @   #
+#       #
+# . . . #
+#########
+`,
+  },
 ];

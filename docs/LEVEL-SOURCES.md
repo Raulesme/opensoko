@@ -16,6 +16,13 @@ with the original author.
 | `levels` file in [morenod/sokoban](https://github.com/morenod/sokoban/blob/master/levels) | Unknown (repo owner `morenod`)                  | One text file, 52 levels, plain XSB format with `Level N` headers. Repo is MIT-licensed, but the file has no author, source or credit lines, and the repo does not say where the levels came from. The set looks like a compilation of mixed styles.                                                                                  | **Do not use.** MIT covers the repo owner's own work; it can't license levels they may have copied. Provenance unknown.                                                         |
 | [Alonso-del-Arte/sokoban-levels](https://github.com/Alonso-del-Arte/sokoban-levels)       | Alonso-del-Arte (self-described as the creator) | `sok` and `slc` folders; sets named Extremely Easy, Seemingly Hard, Frustratingly Difficult, Illustrative (also on Game-Sokoban.com). README says the author made them with YASC and Notepad and credits no other level authors. Sidebar shows **GPL-3.0**; the README itself has no license statement.                               | **Most promising**, but GPL-3.0 conflicts with our MIT plan. Ask the author to dual-license (MIT or CC0) or grant a bundling exception. Set sizes and quality not yet reviewed. |
 
+## Current state
+
+- 13 original placeholder levels ship in `src/levels/builtin.ts`; each is checked solvable
+  by the test-suite solver.
+- A draft permission request for Microban is in `docs/PERMISSION-REQUEST-SKINNER.md`
+  (not sent yet).
+
 ## Recommended path
 
 0. Alonso-del-Arte's sets are the first thing to ask about: the author appears to have
