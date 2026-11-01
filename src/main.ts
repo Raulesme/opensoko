@@ -48,7 +48,8 @@ $('undo').addEventListener('click', () => handle({ type: 'undo' }));
 $('restart').addEventListener('click', () => handle({ type: 'restart' }));
 $('next').addEventListener('click', nextLevel);
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && game.isWon) nextLevel();
+  // A focused button already handles Enter itself via its click handler.
+  if (e.key === 'Enter' && game.isWon && !(e.target instanceof HTMLButtonElement)) nextLevel();
 });
 window.addEventListener('resize', () => renderer.fit());
 
