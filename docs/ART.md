@@ -1,10 +1,24 @@
 # Art provenance
 
 All sprites in `src/assets/sprites/` were generated with [Pixellab](https://pixellab.ai) on
-2026-11-01 (account of the project owner) and selected by hand. **Check Pixellab's
-[terms of service](https://pixellab.ai/termsofservice) before relying on the licence stated in
-`ASSETS-LICENSE.md`**: AI-generated output may have limited copyright protection, and the
-terms decide what the owner may relicense.
+2026-11-01 (account of the project owner) and selected by hand.
+
+## Terms review
+
+Reviewed against Pixellab's [terms of service](https://pixellab.ai/termsofservice) (last updated
+2026-10-30), summarised, not legal advice:
+
+- §1.3, §3.3: the user owns what they create and may use, modify and distribute it commercially or
+  not, with no permission needed. The user is responsible for it not infringing third parties.
+- §1.2, §3.3: outputs must **not** be used to train other models without Pixellab's written
+  permission. `ASSETS-LICENSE.md` repeats this as a request to downstream users.
+- §2.2: programmatic use only through `api.pixellab.ai`, which is the only host used here.
+- §4: terms reference the Open RAIL-M licence (the model's licence, not the generated images').
+- Copyright in purely AI-generated images varies by country; the project owner confirmed this is
+  not an issue in theirs.
+- Terms can change (§2.1); re-check before generating more assets.
+
+## Assets
 
 | File                                 | Size  | Source tool                                                         | Prompt (abridged)                                                                 | Pick                 |
 | ------------------------------------ | ----- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------- |
