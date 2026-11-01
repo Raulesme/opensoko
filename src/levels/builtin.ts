@@ -1,12 +1,10 @@
-export interface LevelEntry {
-  /** Stable identifier used as the save-data key. Never change an id once released. */
-  id: string;
-  name: string;
-  text: string;
-}
+import { GENERATED_LEVELS } from './generated';
+import type { LevelEntry } from './types';
 
-/** Small original placeholder levels. Real level sets are tracked in docs/LEVEL-SOURCES.md. */
-export const BUILTIN_LEVELS: readonly LevelEntry[] = [
+export type { LevelEntry };
+
+/** Hand-made tutorial levels. */
+const INTRO_LEVELS: readonly LevelEntry[] = [
   {
     id: 'builtin-1',
     name: 'First Push',
@@ -25,18 +23,6 @@ export const BUILTIN_LEVELS: readonly LevelEntry[] = [
 # .$@ #
 #     #
 #######
-`,
-  },
-  {
-    id: 'builtin-3',
-    name: 'Two Crates',
-    text: `
-########
-#  #   #
-# $  $ #
-#  @.  #
-# .#   #
-########
 `,
   },
   {
@@ -75,89 +61,7 @@ export const BUILTIN_LEVELS: readonly LevelEntry[] = [
 #######
 `,
   },
-  {
-    id: 'builtin-7',
-    name: 'Wide Hall',
-    text: `
-##########
-#        #
-#   $$   #
-# @      #
-#   ..   #
-##########
-`,
-  },
-  {
-    id: 'builtin-8',
-    name: 'Alcove',
-    text: `
-#######
-#  .  #
-#  #  #
-# $$  #
-# @ . #
-#######
-`,
-  },
-  {
-    id: 'builtin-9',
-    name: 'Swap Room',
-    text: `
-########
-#  .   #
-# $#$  #
-#  @ . #
-########
-`,
-  },
-  {
-    id: 'builtin-10',
-    name: 'The Ring',
-    text: `
-########
-#      #
-# #### #
-# #. . #
-#@$ $# #
-#      #
-########
-`,
-  },
-  {
-    id: 'builtin-11',
-    name: 'Narrow Pass',
-    text: `
-#########
-#   #   #
-# $ # . #
-#@  $ . #
-#   #   #
-#########
-`,
-  },
-  {
-    id: 'builtin-12',
-    name: 'Doorway',
-    text: `
-#########
-#   #   #
-# $ # . #
-#   $ . #
-# @ #   #
-#########
-`,
-  },
-  {
-    id: 'builtin-13',
-    name: 'Three Crates',
-    text: `
-#########
-#       #
-# $ $ $ #
-#   @   #
-#       #
-# . . . #
-#########
-`,
-  },
 ];
+
+/** All playable levels in order: tutorial levels first, then generated ones by difficulty. */
+export const BUILTIN_LEVELS: readonly LevelEntry[] = [...INTRO_LEVELS, ...GENERATED_LEVELS];

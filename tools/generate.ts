@@ -209,14 +209,48 @@ export function generate(seed: number, attempts: number): Candidate[] {
     // No box may start on a goal.
     if (s.boxes.filter((b) => s.goals.includes(b)).length > 0) continue;
 
-    const walls = floor.map((f) => !f);
+    // Keep only walls that touch the playable area (classic look), then crop to their bounds.
+    const { w, h } = room;
+    const touchesFloor = (i: number) => {
+      const x = i % w;
+      const y = Math.floor(i / w);
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && ny >= 0 && nx < w && ny < h && floor[ny * w + nx]) return true;
+        }
+      }
+      return false;
+    };
+    const used = floor.map((f, i) => f || touchesFloor(i));
+    let minX = w;
+    let maxX = -1;
+    let minY = h;
+    let maxY = -1;
+    used.forEach((u, i) => {
+      if (!u) return;
+      minX = Math.min(minX, i % w);
+      maxX = Math.max(maxX, i % w);
+      minY = Math.min(minY, Math.floor(i / w));
+      maxY = Math.max(maxY, Math.floor(i / w));
+    });
+    const cw = maxX - minX + 1;
+    const ch = maxY - minY + 1;
+    const remap = (i: number) => (Math.floor(i / w) - minY) * cw + ((i % w) - minX);
+    const walls: boolean[] = new Array<boolean>(cw * ch).fill(false);
+    const goalGrid: boolean[] = new Array<boolean>(cw * ch).fill(false);
+    used.forEach((u, i) => {
+      if (u && !floor[i]) walls[remap(i)] = true;
+    });
+    s.goals.forEach((g) => (goalGrid[remap(g)] = true));
     const level = {
-      width: room.w,
-      height: room.h,
+      width: cw,
+      height: ch,
       walls,
-      goals: floor.map((_, i) => s.goals.includes(i)),
-      boxes: s.boxes,
-      player: s.player,
+      goals: goalGrid,
+      boxes: s.boxes.map(remap),
+      player: remap(s.player),
     };
     const text = levelToString(level);
     const key = canonical(text);
@@ -234,8 +268,8 @@ export function generate(seed: number, attempts: number): Candidate[] {
     out.push({
       text,
       boxes: boxCount,
-      width: room.w,
-      height: room.h,
+      width: cw,
+      height: ch,
       floorCells: floor.filter(Boolean).length,
       minPushes: result.pushes.length,
       states: result.states,
