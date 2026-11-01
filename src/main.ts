@@ -1,9 +1,11 @@
 import './style.css';
 import { Game, parseLevel } from './game';
+import type { Direction } from './game';
 import { attachInput } from './input/attach';
 import type { Action } from './input/actions';
 import { BUILTIN_LEVELS } from './levels/builtin';
 import { Renderer } from './render/renderer';
+import { loadAtlas } from './render/sprites';
 import {
   browserStorage,
   loadProgress,
@@ -18,11 +20,12 @@ const storage = browserStorage();
 let progress = loadProgress(storage);
 
 const canvas = $<HTMLCanvasElement>('game');
-const renderer = new Renderer(canvas);
+const renderer = new Renderer(canvas, await loadAtlas());
 
 let view: 'menu' | 'play' = 'menu';
 let levelIndex = 0;
 let game: Game | null = null;
+let facing: Direction = 'down';
 
 function persist(): void {
   saveProgress(storage, progress);
@@ -71,6 +74,7 @@ function startLevel(index: number): void {
   levelIndex = index;
   const entry = BUILTIN_LEVELS[index]!;
   game = new Game(parseLevel(entry.text));
+  facing = 'down';
   progress = setLastLevel(progress, entry.id);
   persist();
 
@@ -83,7 +87,7 @@ function startLevel(index: number): void {
 
 function refresh(): void {
   if (!game) return;
-  renderer.draw();
+  renderer.draw(facing);
   $('level').textContent = `Level ${levelIndex + 1}/${BUILTIN_LEVELS.length}`;
   $('moves').textContent = `Moves: ${game.moves}`;
   $('pushes').textContent = `Pushes: ${game.pushes}`;
@@ -112,8 +116,10 @@ function handle(action: Action): void {
   if (view !== 'play' || !game) return;
   if (action.type === 'menu') return showMenu();
   const wasWon = game.isWon;
-  if (action.type === 'move') game.move(action.dir);
-  else if (action.type === 'undo') game.undo();
+  if (action.type === 'move') {
+    facing = action.dir; // turn to face the move even when blocked
+    game.move(action.dir);
+  } else if (action.type === 'undo') game.undo();
   else game.restart();
   if (!wasWon && game.isWon) onWin(game);
   refresh();

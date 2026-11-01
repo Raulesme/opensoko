@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Game, parseLevel } from '../src/game';
 import { BUILTIN_LEVELS } from '../src/levels/builtin';
-import { spriteDefinitions, TILE } from '../src/render/sprites';
 import { pushesToMoves, solvePushes } from '../tools/solver';
 
 describe('built-in levels', () => {
@@ -20,16 +19,4 @@ describe('built-in levels', () => {
 it('built-in level ids are unique', () => {
   const ids = BUILTIN_LEVELS.map((l) => l.id);
   expect(new Set(ids).size).toBe(ids.length);
-});
-
-describe('sprite definitions', () => {
-  for (const [name, def] of Object.entries(spriteDefinitions())) {
-    it(`${name} is ${TILE}x${TILE} and uses only known palette keys`, () => {
-      expect(def.rows).toHaveLength(TILE);
-      for (const row of def.rows) {
-        expect(row).toHaveLength(TILE);
-        for (const ch of row) expect(ch === '.' || ch in def.palette).toBe(true);
-      }
-    });
-  }
 });

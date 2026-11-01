@@ -10,4 +10,5 @@ credited below.
 
 ## Credits
 
-_None yet._
+- Sprites in `src/assets/sprites/` were generated with Pixellab (https://pixellab.ai). See
+  `docs/ART.md` for prompts and provenance, and Pixellab's terms of service for usage rights.
