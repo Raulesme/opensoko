@@ -72,22 +72,40 @@ export function parseLevel(text: string): Level {
   return level;
 }
 
-/** True if the player cannot walk off the edge of the grid (ignoring boxes). */
-function isEnclosed(level: Level): boolean {
+/** Cells the player could ever stand on (flood fill from the start, ignoring boxes). */
+export function reachableFloor(level: Level): boolean[] {
   const { width, height, walls } = level;
-  const seen = new Set<number>([level.player]);
+  const seen: boolean[] = new Array<boolean>(width * height).fill(false);
+  seen[level.player] = true;
   const stack = [level.player];
   while (stack.length > 0) {
     const i = stack.pop()!;
     const x = i % width;
     const y = Math.floor(i / width);
-    if (x === 0 || y === 0 || x === width - 1 || y === height - 1) return false;
-    for (const n of [i - 1, i + 1, i - width, i + width]) {
-      if (!walls[n] && !seen.has(n)) {
-        seen.add(n);
+    const neighbours: number[] = [];
+    if (x > 0) neighbours.push(i - 1);
+    if (x < width - 1) neighbours.push(i + 1);
+    if (y > 0) neighbours.push(i - width);
+    if (y < height - 1) neighbours.push(i + width);
+    for (const n of neighbours) {
+      if (!walls[n] && !seen[n]) {
+        seen[n] = true;
         stack.push(n);
       }
     }
+  }
+  return seen;
+}
+
+/** True if the player cannot walk off the edge of the grid (ignoring boxes). */
+function isEnclosed(level: Level): boolean {
+  const { width, height } = level;
+  const floor = reachableFloor(level);
+  for (let i = 0; i < floor.length; i++) {
+    if (!floor[i]) continue;
+    const x = i % width;
+    const y = Math.floor(i / width);
+    if (x === 0 || y === 0 || x === width - 1 || y === height - 1) return false;
   }
   return true;
 }

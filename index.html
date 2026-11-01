@@ -2,11 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>OpenSoko</title>
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <canvas id="game"></canvas>
+    <header class="hud">
+      <span id="level">Level 1</span>
+      <span id="moves">Moves: 0</span>
+      <span id="pushes">Pushes: 0</span>
+    </header>
+    <main id="stage">
+      <canvas id="game"></canvas>
+      <div id="win" class="win" hidden>
+        <p>Level complete!</p>
+        <button id="next" type="button">Next level</button>
+      </div>
+    </main>
+    <footer class="controls">
+      <button id="undo" type="button">Undo (Z)</button>
+      <button id="restart" type="button">Restart (R)</button>
+    </footer>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
