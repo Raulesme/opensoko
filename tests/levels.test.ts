@@ -5,9 +5,9 @@ import { spriteDefinitions, TILE } from '../src/render/sprites';
 import { solve } from './helpers/solve';
 
 describe('built-in levels', () => {
-  BUILTIN_LEVELS.forEach((text, i) => {
-    it(`level ${i + 1} parses and is solvable`, () => {
-      const level = parseLevel(text);
+  BUILTIN_LEVELS.forEach((entry) => {
+    it(`${entry.id} parses and is solvable`, () => {
+      const level = parseLevel(entry.text);
       const solution = solve(level);
       expect(solution).not.toBeNull();
       const game = new Game(level);
@@ -15,6 +15,11 @@ describe('built-in levels', () => {
       expect(game.isWon).toBe(true);
     });
   });
+});
+
+it('built-in level ids are unique', () => {
+  const ids = BUILTIN_LEVELS.map((l) => l.id);
+  expect(new Set(ids).size).toBe(ids.length);
 });
 
 describe('sprite definitions', () => {

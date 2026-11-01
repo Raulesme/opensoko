@@ -10,22 +10,30 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <header class="hud">
-      <span id="level">Level 1</span>
-      <span id="moves">Moves: 0</span>
-      <span id="pushes">Pushes: 0</span>
-    </header>
-    <main id="stage">
-      <canvas id="game"></canvas>
-      <div id="win" class="win" hidden>
-        <p>Level complete!</p>
-        <button id="next" type="button">Next level</button>
-      </div>
-    </main>
-    <footer class="controls">
-      <button id="undo" type="button">Undo (Z)</button>
-      <button id="restart" type="button">Restart (R)</button>
-    </footer>
+    <section id="select" class="select" hidden>
+      <h1>OpenSoko</h1>
+      <ol id="level-list" class="level-list"></ol>
+    </section>
+    <div id="play" class="play" hidden>
+      <header class="hud">
+        <button id="menu" type="button">Menu (Esc)</button>
+        <span id="level">Level 1</span>
+        <span id="moves">Moves: 0</span>
+        <span id="pushes">Pushes: 0</span>
+      </header>
+      <main id="stage">
+        <canvas id="game"></canvas>
+        <div id="win" class="win" hidden>
+          <p>Level complete!</p>
+          <p id="win-stats" class="win-stats"></p>
+          <button id="next" type="button">Next level</button>
+        </div>
+      </main>
+      <footer class="controls">
+        <button id="undo" type="button">Undo (Z)</button>
+        <button id="restart" type="button">Restart (R)</button>
+      </footer>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

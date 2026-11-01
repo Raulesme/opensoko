@@ -13,6 +13,7 @@ describe('keyToAction', () => {
     expect(keyToAction('Z')).toEqual({ type: 'undo' });
     expect(keyToAction('Backspace')).toEqual({ type: 'undo' });
     expect(keyToAction('r')).toEqual({ type: 'restart' });
+    expect(keyToAction('Escape')).toEqual({ type: 'menu' });
   });
 
   it('ignores unknown keys', () => {

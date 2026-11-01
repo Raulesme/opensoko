@@ -16,8 +16,6 @@ body {
 }
 
 body {
-  display: flex;
-  flex-direction: column;
   background: var(--bg);
   color: var(--fg);
   font-family: ui-monospace, 'Courier New', monospace;
@@ -77,4 +75,65 @@ button {
 button:hover,
 button:focus-visible {
   border-color: var(--accent);
+}
+
+.play {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.play[hidden],
+.select[hidden] {
+  display: none;
+}
+
+.hud {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.select {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1rem;
+  text-align: center;
+}
+
+.level-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.75rem;
+}
+
+.level-list button {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem;
+}
+
+.level-list .num {
+  font-size: 1.25rem;
+}
+
+.level-list .name,
+.level-list .best {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.level-list .done {
+  border-color: #6fcf6f;
+}
+
+.win-stats {
+  font-size: 1rem;
+  color: var(--fg);
+  margin: 0;
 }
