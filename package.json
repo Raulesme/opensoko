@@ -13,7 +13,10 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "levels:generate": "vite-node tools/generate-cli.ts",
+    "levels:curate": "vite-node tools/curate-cli.ts",
+    "levels:pack": "vite-node tools/build-pack-cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
