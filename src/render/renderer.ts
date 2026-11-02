@@ -5,6 +5,9 @@ import type { MoveAnimation } from './animation';
 import { TILE } from './sprites';
 import type { SpriteAtlas } from './sprites';
 
+/** Largest on-screen scale: tiny levels stay crisp instead of becoming huge and blurry. */
+const MAX_SCALE = 3;
+
 /** Draws a Game onto a canvas at native pixel size, then scales it by an integer factor via CSS. */
 export class Renderer {
   private readonly ctx: CanvasRenderingContext2D;
@@ -39,7 +42,7 @@ export class Renderer {
     const availW = parent?.clientWidth ?? window.innerWidth;
     const availH = parent?.clientHeight ?? window.innerHeight;
     const fit = Math.min(availW / this.canvas.width, availH / this.canvas.height);
-    const scale = Math.max(1, Math.floor(fit * 2) / 2);
+    const scale = Math.min(MAX_SCALE, Math.max(1, Math.floor(fit * 2) / 2));
     this.canvas.style.width = `${Math.round(this.canvas.width * scale)}px`;
     this.canvas.style.height = `${Math.round(this.canvas.height * scale)}px`;
   }

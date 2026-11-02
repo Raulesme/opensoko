@@ -9,6 +9,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-01',
     name: 'Quarry',
+    par: 7,
     text: `
 ########
 #   .  #
@@ -22,6 +23,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-02',
     name: 'Harbor',
+    par: 7,
     text: `
 ###########
 #       # #
@@ -37,6 +39,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-03',
     name: 'Cellar',
+    par: 8,
     text: `
 ###########
 #  .##    #
@@ -50,6 +53,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-04',
     name: 'Foundry',
+    par: 8,
     text: `
 #######
 #.    #
@@ -62,6 +66,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-05',
     name: 'Granary',
+    par: 8,
     text: `
 #######
 # #   #
@@ -77,6 +82,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-06',
     name: 'Depot',
+    par: 8,
     text: `
 #########
 #.  .@  #
@@ -89,6 +95,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-07',
     name: 'Annex',
+    par: 9,
     text: `
   ########
 ### . .  #
@@ -101,6 +108,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-08',
     name: 'Loft',
+    par: 11,
     text: `
 #### #####
 #  # #   #
@@ -115,6 +123,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-09',
     name: 'Bunker',
+    par: 12,
     text: `
 ##########
 #  .##   #
@@ -127,6 +136,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-10',
     name: 'Wharf',
+    par: 8,
     text: `
 #########
 #     @ #
@@ -142,6 +152,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-11',
     name: 'Dockyard',
+    par: 13,
     text: `
 #########
 # #.    #
@@ -155,6 +166,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-12',
     name: 'Smithy',
+    par: 10,
     text: `
 #########
 #    #  #
@@ -168,6 +180,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-13',
     name: 'Cannery',
+    par: 10,
     text: `
  #####
 ## @ ##
@@ -181,6 +194,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-14',
     name: 'Boiler Room',
+    par: 14,
     text: `
 ######
 #    #
@@ -195,6 +209,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-15',
     name: 'Mill',
+    par: 8,
     text: `
 ###########
 #    #    #
@@ -210,6 +225,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-16',
     name: 'Pantry',
+    par: 12,
     text: `
    ######
 #### $..#
@@ -222,6 +238,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-17',
     name: 'Lighthouse',
+    par: 10,
     text: `
 ########
 #.     #
@@ -237,6 +254,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-18',
     name: 'Stockroom',
+    par: 9,
     text: `
 #######
 # .   #
@@ -251,6 +269,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-19',
     name: 'Crossing',
+    par: 12,
     text: `
  ######
  #  . #
@@ -264,6 +283,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-20',
     name: 'Gatehouse',
+    par: 11,
     text: `
 ########
 #  .   #
@@ -279,6 +299,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-21',
     name: 'Cistern',
+    par: 13,
     text: `
 ##### ###
 #   # #+#
@@ -293,6 +314,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-22',
     name: 'Tannery',
+    par: 9,
     text: `
 ##########
 #   @#  .#
@@ -306,6 +328,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-23',
     name: 'Kiln',
+    par: 10,
     text: `
 ##########
 #.      .#
@@ -318,6 +341,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-24',
     name: 'Rope Walk',
+    par: 16,
     text: `
 ###########
 #    ##   #
@@ -333,6 +357,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-25',
     name: 'Bakehouse',
+    par: 14,
     text: `
 ###########
 #       . #
@@ -347,6 +372,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-26',
     name: 'Salt Store',
+    par: 11,
     text: `
 ###########
 # #       #
@@ -362,6 +388,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-27',
     name: 'Lamp Works',
+    par: 11,
     text: `
   ########
   #  .   #
@@ -377,6 +404,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-28',
     name: 'Chandlery',
+    par: 14,
     text: `
 #########
 # ##   .#
@@ -392,6 +420,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-29',
     name: 'Tidal Store',
+    par: 18,
     text: `
 #########
 # @#  . #
@@ -404,6 +433,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-30',
     name: 'Belfry',
+    par: 13,
     text: `
 #######
 #...$ #
@@ -418,6 +448,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-31',
     name: 'Vault',
+    par: 12,
     text: `
 ###########
 #         #
@@ -433,6 +464,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-32',
     name: 'Signal Hall',
+    par: 18,
     text: `
   #########
 ###.      #
@@ -445,6 +477,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-33',
     name: 'Engine Shed',
+    par: 15,
     text: `
 ##########
 #        #
@@ -460,6 +493,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-34',
     name: 'Cold Store',
+    par: 15,
     text: `
 ##########
 #.      .#
@@ -474,6 +508,7 @@ export const GENERATED_LEVELS: readonly LevelEntry[] = [
   {
     id: 'gen-35',
     name: 'Long Haul',
+    par: 31,
     text: `
 ###########
 # @ ##    #

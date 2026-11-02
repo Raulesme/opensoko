@@ -4,7 +4,9 @@ import { DIRECTION_DELTAS, Game, parseLevel } from './game';
 import type { Direction } from './game';
 import { attachInput } from './input/attach';
 import type { Action } from './input/actions';
-import { BUILTIN_LEVELS } from './levels/builtin';
+import { PACKS } from './levels/packs';
+import { rating, starString } from './levels/rating';
+import type { LevelEntry } from './levels/types';
 import { isFinished, makeMoveAnimation, MOVE_MS } from './render/animation';
 import type { MoveAnimation } from './render/animation';
 import { Renderer } from './render/renderer';
@@ -40,8 +42,16 @@ function toggleMute(): void {
 const canvas = $<HTMLCanvasElement>('game');
 const renderer = new Renderer(canvas, await loadAtlas());
 
+/** A run of levels being played: a pack from the menu (ranked) or a one-off puzzle. */
+interface Session {
+  levels: readonly LevelEntry[];
+  index: number;
+  /** Ranked sessions save best scores to progress; others (random puzzles) do not. */
+  ranked: boolean;
+}
+
 let view: 'menu' | 'play' = 'menu';
-let levelIndex = 0;
+let session: Session | null = null;
 let game: Game | null = null;
 let facing: Direction = 'down';
 let anim: MoveAnimation | null = null;
@@ -68,8 +78,8 @@ function stopAnimation(): void {
   rafId = 0;
 }
 
-function persist(): void {
-  saveProgress(storage, progress);
+function currentEntry(): LevelEntry {
+  return session!.levels[session!.index]!;
 }
 
 function showMenu(): void {
@@ -78,48 +88,70 @@ function showMenu(): void {
   $('play').hidden = true;
   $('select').hidden = false;
 
-  const list = $('level-list');
-  list.replaceChildren();
-  BUILTIN_LEVELS.forEach((entry, index) => {
-    const record = progress.levels[entry.id];
-    const li = document.createElement('li');
-    const button = document.createElement('button');
-    button.type = 'button';
-    if (record) button.classList.add('done');
-    const num = Object.assign(document.createElement('span'), {
-      className: 'num',
-      textContent: `${record ? '✓ ' : ''}${index + 1}`,
-    });
-    const name = Object.assign(document.createElement('span'), {
-      className: 'name',
-      textContent: entry.name,
-    });
-    button.append(num, name);
-    if (record) {
-      button.append(
-        Object.assign(document.createElement('span'), {
-          className: 'best',
-          textContent: `Best: ${record.bestMoves} moves / ${record.bestPushes} pushes`,
-        }),
-      );
-    }
-    button.addEventListener('click', () => startLevel(index));
-    li.append(button);
-    list.append(li);
-  });
+  const container = $('packs');
+  container.replaceChildren();
+  let focus: HTMLElement | null = null;
 
-  const last = BUILTIN_LEVELS.findIndex((l) => l.id === progress.lastLevel);
-  (list.querySelectorAll('button')[last >= 0 ? last : 0] as HTMLElement | undefined)?.focus();
+  for (const pack of PACKS) {
+    const done = pack.levels.filter((l) => progress.levels[l.id]).length;
+    const section = document.createElement('section');
+    section.className = 'pack';
+    const header = document.createElement('div');
+    header.className = 'pack-header';
+    header.append(
+      Object.assign(document.createElement('h2'), { textContent: pack.name }),
+      Object.assign(document.createElement('span'), {
+        className: 'desc',
+        textContent: pack.description,
+      }),
+      Object.assign(document.createElement('span'), {
+        className: 'count',
+        textContent: `${done}/${pack.levels.length} done`,
+      }),
+    );
+    const list = document.createElement('ol');
+    list.className = 'level-list';
+
+    pack.levels.forEach((entry, index) => {
+      const record = progress.levels[entry.id];
+      const li = document.createElement('li');
+      const button = document.createElement('button');
+      button.type = 'button';
+      if (record) button.classList.add('done');
+      const label = (className: string, text: string) =>
+        Object.assign(document.createElement('span'), { className, textContent: text });
+      button.append(label('num', `${record ? '✓ ' : ''}${index + 1}`), label('name', entry.name));
+      if (record) {
+        button.append(
+          label('stars', starString(rating(record.bestPushes, entry.par))),
+          label('best', `${record.bestMoves} moves / ${record.bestPushes} pushes`),
+        );
+      }
+      button.addEventListener('click', () => startSession(pack.levels, index, true));
+      li.append(button);
+      list.append(li);
+      if (entry.id === progress.lastLevel) focus = button;
+    });
+    section.append(header, list);
+    container.append(section);
+  }
+  (focus ?? container.querySelector<HTMLElement>('button'))?.focus();
 }
 
-function startLevel(index: number): void {
+function startSession(levels: readonly LevelEntry[], index: number, ranked: boolean): void {
+  session = { levels, index, ranked };
+  loadCurrent();
+}
+
+function loadCurrent(): void {
   stopAnimation();
-  levelIndex = index;
-  const entry = BUILTIN_LEVELS[index]!;
+  const entry = currentEntry();
   game = new Game(parseLevel(entry.text));
   facing = 'down';
-  progress = setLastLevel(progress, entry.id);
-  persist();
+  if (session!.ranked) {
+    progress = setLastLevel(progress, entry.id);
+    saveProgress(storage, progress);
+  }
 
   view = 'play';
   $('select').hidden = true;
@@ -129,31 +161,44 @@ function startLevel(index: number): void {
 }
 
 function refresh(): void {
-  if (!game) return;
+  if (!game || !session) return;
   renderer.draw(facing, anim, performance.now());
-  $('level').textContent = `Level ${levelIndex + 1}/${BUILTIN_LEVELS.length}`;
+  const entry = currentEntry();
+  $('level').textContent = `${entry.name} (${session.index + 1}/${session.levels.length})`;
   $('moves').textContent = `Moves: ${game.moves}`;
   $('pushes').textContent = `Pushes: ${game.pushes}`;
+  $('par').textContent = `Par: ${entry.par}`;
   // Hold the win overlay back until the last move has finished sliding.
   $('win').hidden = !game.isWon || anim !== null;
-  $('next').textContent = levelIndex + 1 < BUILTIN_LEVELS.length ? 'Next level' : 'Back to menu';
+  $('next').textContent = session.index + 1 < session.levels.length ? 'Next level' : 'Back to menu';
 }
 
 function onWin(g: Game): void {
-  const entry = BUILTIN_LEVELS[levelIndex]!;
-  const result = recordCompletion(progress, entry.id, g.moves, g.pushes);
-  progress = result.progress;
-  persist();
-  const best = progress.levels[entry.id]!;
+  const entry = currentEntry();
   const flag = (isNew: boolean) => (isNew ? ' (new best!)' : '');
-  $('win-stats').textContent =
-    `Moves: ${g.moves}${flag(result.newBestMoves)} · Pushes: ${g.pushes}${flag(result.newBestPushes)}` +
-    ` — Best: ${best.bestMoves}/${best.bestPushes}`;
+  const stars = rating(g.pushes, entry.par);
+  $('win-stars').textContent = starString(stars);
+
+  let line = `Moves: ${g.moves} · Pushes: ${g.pushes} (par ${entry.par})`;
+  if (session!.ranked) {
+    const result = recordCompletion(progress, entry.id, g.moves, g.pushes);
+    progress = result.progress;
+    saveProgress(storage, progress);
+    const best = progress.levels[entry.id]!;
+    line =
+      `Moves: ${g.moves}${flag(result.newBestMoves)} · ` +
+      `Pushes: ${g.pushes}${flag(result.newBestPushes)} (par ${entry.par})` +
+      ` — Best: ${best.bestMoves}/${best.bestPushes}`;
+  }
+  $('win-stats').textContent = line;
 }
 
 function nextLevel(): void {
-  if (levelIndex + 1 < BUILTIN_LEVELS.length) startLevel(levelIndex + 1);
-  else showMenu();
+  if (!session) return;
+  if (session.index + 1 < session.levels.length) {
+    session.index++;
+    loadCurrent();
+  } else showMenu();
 }
 
 function handle(action: Action): void {
@@ -204,6 +249,7 @@ renderMuteButton();
 $('menu').addEventListener('click', () => handle({ type: 'menu' }));
 $('undo').addEventListener('click', () => handle({ type: 'undo' }));
 $('restart').addEventListener('click', () => handle({ type: 'restart' }));
+$('replay').addEventListener('click', () => handle({ type: 'restart' }));
 $('next').addEventListener('click', nextLevel);
 window.addEventListener('keydown', (e) => {
   // A focused button already handles Enter itself via its click handler.

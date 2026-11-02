@@ -8,6 +8,7 @@ const INTRO_LEVELS: readonly LevelEntry[] = [
   {
     id: 'builtin-1',
     name: 'First Push',
+    par: 1,
     text: `
 #####
 #@$.#
@@ -17,6 +18,7 @@ const INTRO_LEVELS: readonly LevelEntry[] = [
   {
     id: 'builtin-2',
     name: 'Open Room',
+    par: 1,
     text: `
 #######
 #     #
@@ -28,6 +30,7 @@ const INTRO_LEVELS: readonly LevelEntry[] = [
   {
     id: 'builtin-4',
     name: 'Corner Turn',
+    par: 3,
     text: `
 ######
 #@   #
@@ -40,6 +43,7 @@ const INTRO_LEVELS: readonly LevelEntry[] = [
   {
     id: 'builtin-5',
     name: 'Pocket',
+    par: 4,
     text: `
 ########
 #  #   #
@@ -52,6 +56,7 @@ const INTRO_LEVELS: readonly LevelEntry[] = [
   {
     id: 'builtin-6',
     name: 'Side by Side',
+    par: 4,
     text: `
 #######
 #     #

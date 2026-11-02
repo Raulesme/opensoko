@@ -43,7 +43,7 @@ export function buildPackSource(picks: readonly Scored[], seeds: string): string
   const entries = picks.map((p, i) => {
     const id = `gen-${String(i + 1).padStart(2, '0')}`;
     const name = NAMES[i] ?? `Level ${i + 1}`;
-    return `  {\n    id: '${id}',\n    name: '${name}',\n    text: \`\n${p.text}\n\`,\n  },`;
+    return `  {\n    id: '${id}',\n    name: '${name}',\n    par: ${p.minPushes},\n    text: \`\n${p.text}\n\`,\n  },`;
   });
   return `import type { LevelEntry } from './types';
 
