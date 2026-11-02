@@ -7,6 +7,8 @@
  *   npx vite-node tools/generate-cli.ts --seed 1 --attempts 2000 --out candidates.json
  */
 import { levelToString, parseLevel } from '../game';
+import { analyze } from './metrics';
+import type { InterestMetrics } from './metrics';
 import { solvePushes } from './solver';
 
 export interface Candidate {
@@ -17,6 +19,12 @@ export interface Candidate {
   floorCells: number;
   minPushes: number;
   states: number;
+  /** Pushes forced by boxes blocking each other (optimal pushes minus the independent lower bound). */
+  excess: number;
+  /** Pushes that move a box farther from its goal (parking, detours). */
+  away: number;
+  /** Number of distinct boxes the optimal solution moves. */
+  moved: number;
 }
 
 /** Small deterministic PRNG so runs are reproducible. */
@@ -31,9 +39,9 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
-type Rng = () => number;
-const int = (rng: Rng, lo: number, hi: number) => lo + Math.floor(rng() * (hi - lo + 1));
-const pick = <T>(rng: Rng, arr: readonly T[]): T => arr[Math.floor(rng() * arr.length)]!;
+export type Rng = () => number;
+export const int = (rng: Rng, lo: number, hi: number) => lo + Math.floor(rng() * (hi - lo + 1));
+export const pick = <T>(rng: Rng, arr: readonly T[]): T => arr[Math.floor(rng() * arr.length)]!;
 
 /** true = floor. Outer ring is always wall. */
 function makeRoom(rng: Rng): { w: number; h: number; floor: boolean[] } {
@@ -197,9 +205,20 @@ export function canonical(text: string): string {
   return variants.sort()[0]!;
 }
 
-/** Higher = harder. Pushes and search effort both matter; effort is log-scaled. */
+/**
+ * The original difficulty score: pushes plus (log) search effort. It rewards size and length, not
+ * interaction, so it is kept only for reference and for the older v1 packs.
+ */
 export function difficulty(c: Pick<Candidate, 'minPushes' | 'states'>): number {
   return c.minPushes + 4 * Math.log2(c.states + 1);
+}
+
+/**
+ * How challenging and interesting a level is. Weighs what boxes force on each other (excess pushes)
+ * and counter-intuitive moves (away pushes) above raw length, with search effort as a tiebreaker.
+ */
+export function challenge(c: Pick<Candidate, 'minPushes' | 'states' | 'excess' | 'away'>): number {
+  return 2 * c.excess + 3 * c.away + c.minPushes / 2 + Math.log2(c.states + 1);
 }
 
 /** Render a pull state as level text, keeping only walls that touch the floor and cropping. */
@@ -250,7 +269,7 @@ function render(room: { w: number; h: number }, floor: boolean[], s: PullState) 
 }
 
 /** Solve a rendered state and measure it; null if it is invalid, unsolvable or too big. */
-function evaluate(
+export function evaluate(
   rendered: { text: string; width: number; height: number },
   floorCells: number,
   boxCount: number,
@@ -264,6 +283,7 @@ function evaluate(
   }
   const result = solvePushes(parsed, maxStates);
   if (!result) return null;
+  const metrics: InterestMetrics = analyze(parsed, result.pushes);
   return {
     text: rendered.text,
     boxes: boxCount,
@@ -272,6 +292,9 @@ function evaluate(
     floorCells,
     minPushes: result.pushes.length,
     states: result.states,
+    excess: metrics.excess,
+    away: metrics.away,
+    moved: metrics.moved,
   };
 }
 
@@ -328,7 +351,7 @@ export function generateOne(rng: Rng, opts: GenOptions = DEFAULT_OPTIONS): Candi
     pullMore(rng, room.w, floor, next, int(rng, opts.hillPulls[0], opts.hillPulls[1]));
     if (!valid(next)) continue;
     const cand = evaluate(render(room, floor, next), floorCells, boxCount, opts.maxStates);
-    if (cand && difficulty(cand) > difficulty(best)) {
+    if (cand && challenge(cand) > challenge(best)) {
       best = cand;
       state.boxes = next.boxes;
       state.player = next.player;

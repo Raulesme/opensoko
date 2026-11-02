@@ -18,9 +18,10 @@ with the original author.
 
 ## Current state
 
-- 40 original levels ship: 5 hand-made intro levels (`src/levels/builtin.ts`) and 35 procedurally
-  generated, curated levels (`src/levels/generated.ts`). The generator is our own code, so these
-  levels carry no third-party licence. Each is checked solvable by the test-suite solver.
+- 105 original levels ship in three packs: Starter (5 hand-made intro levels in `src/levels/builtin.ts`
+  plus 35 generated), Advanced (35 generated) and Master (30, improved by local search; see
+  `docs/GENERATOR.md`). The generator is our own code, so these levels carry no third-party licence.
+  Each is checked solvable, with its par verified, by the test-suite solver.
 - A draft permission request for Microban is in `docs/PERMISSION-REQUEST-SKINNER.md`
   (not sent yet).
 

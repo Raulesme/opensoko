@@ -5,6 +5,8 @@ import type { LevelEntry } from '../../src/levels/types';
 
 /** Register one test per level: it parses, is solvable, and its par matches the solver. */
 export function verifyLevels(levels: readonly LevelEntry[]): void {
+  // A shard of an empty or small pack may have nothing to check; vitest rejects empty suites.
+  if (levels.length === 0) it.skip('no levels in this shard', () => undefined);
   for (const entry of levels) {
     it(`${entry.id} parses, is solvable and has the right par`, () => {
       const level = parseLevel(entry.text);

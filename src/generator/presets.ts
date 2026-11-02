@@ -1,24 +1,35 @@
 import { isAcceptable } from './curate';
-import { difficulty, generateOne, mulberry32 } from './generate';
+import { challenge, generateOne, mulberry32 } from './generate';
 import type { Candidate, GenOptions } from './generate';
 
 export interface Preset {
   id: string;
   name: string;
-  /** Accept a generated level only when its difficulty score is in [min, max). */
-  minDifficulty: number;
-  maxDifficulty: number;
+  /** Accept a level only when its challenge score is in [minChallenge, maxChallenge). */
+  minChallenge: number;
+  maxChallenge: number;
+  /** ...and it has at least this much box-on-box interaction (see metrics.ts). */
+  minExcess: number;
+  minAway: number;
   options: GenOptions;
   /** Give up (return null) after this many attempts. */
   maxAttempts: number;
 }
 
+/**
+ * Difficulty presets. Bands are on the `challenge` score and every preset above Easy also demands
+ * real interaction (boxes blocking each other, counter-intuitive pushes), so a level cannot reach
+ * Hard just by being long. Room-size filters aim generation at shapes that produce interaction:
+ * in generated pools, 4-5 boxes with at least ~8 floor cells per box did far better.
+ */
 export const PRESETS: readonly Preset[] = [
   {
     id: 'easy',
     name: 'Easy',
-    minDifficulty: 28,
-    maxDifficulty: 45,
+    minChallenge: 10,
+    maxChallenge: 24,
+    minExcess: 0,
+    minAway: 0,
     options: {
       boxes: [2, 2, 3],
       pullsPerBox: [50, 80],
@@ -31,8 +42,10 @@ export const PRESETS: readonly Preset[] = [
   {
     id: 'medium',
     name: 'Medium',
-    minDifficulty: 45,
-    maxDifficulty: 65,
+    minChallenge: 24,
+    maxChallenge: 33,
+    minExcess: 2,
+    minAway: 0,
     options: {
       boxes: [3, 3, 4],
       pullsPerBox: [60, 90],
@@ -40,38 +53,43 @@ export const PRESETS: readonly Preset[] = [
       hillPulls: [10, 30],
       maxStates: 60_000,
     },
-    maxAttempts: 600,
+    maxAttempts: 800,
   },
   {
     id: 'hard',
     name: 'Hard',
-    minDifficulty: 65,
-    maxDifficulty: 80,
+    minChallenge: 33,
+    maxChallenge: 43,
+    minExcess: 4,
+    minAway: 1,
     options: {
-      boxes: [5],
+      boxes: [4, 4, 5],
       pullsPerBox: [70, 110],
       hill: 0,
       hillPulls: [10, 30],
       maxStates: 100_000,
-      minFloorCells: 28,
-      maxFloorCells: 44,
+      minFloorCells: 32,
+      maxFloorCells: 56,
     },
-    maxAttempts: 1500,
+    maxAttempts: 3000,
   },
   {
     id: 'expert',
     name: 'Expert',
-    minDifficulty: 80,
-    maxDifficulty: 1000,
+    minChallenge: 43,
+    maxChallenge: 1000,
+    minExcess: 6,
+    minAway: 2,
     options: {
-      boxes: [5],
+      boxes: [4, 5, 5],
       pullsPerBox: [70, 110],
       hill: 0,
       hillPulls: [10, 30],
       maxStates: 250_000,
-      minFloorCells: 44,
+      minFloorCells: 36,
+      maxFloorCells: 60,
     },
-    maxAttempts: 4000,
+    maxAttempts: 8000,
   },
 ];
 
@@ -85,6 +103,17 @@ export interface GeneratedPuzzle {
   attempts: number;
 }
 
+/** Does this level meet the preset's difficulty band and interaction gates? */
+export function satisfies(c: Candidate, preset: Preset): boolean {
+  const score = challenge(c);
+  return (
+    score >= preset.minChallenge &&
+    score < preset.maxChallenge &&
+    c.excess >= preset.minExcess &&
+    c.away >= preset.minAway
+  );
+}
+
 /**
  * Deterministically generate a puzzle for a preset and seed: the same inputs always yield the same
  * level (for a given generator version), so a short code can share a puzzle.
@@ -94,9 +123,7 @@ export function generateForPreset(seed: number, preset: Preset): GeneratedPuzzle
   for (let attempt = 1; attempt <= preset.maxAttempts; attempt++) {
     const candidate = generateOne(rng, preset.options);
     if (!candidate || !isAcceptable(candidate)) continue;
-    const d = difficulty(candidate);
-    if (d >= preset.minDifficulty && d < preset.maxDifficulty)
-      return { candidate, attempts: attempt };
+    if (satisfies(candidate, preset)) return { candidate, attempts: attempt };
   }
   return null;
 }

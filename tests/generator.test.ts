@@ -6,20 +6,20 @@ import { solvePushes } from '../src/generator/solver';
 
 describe('puzzle codes', () => {
   it('round-trips', () => {
-    expect(formatCode({ preset: 'hard', seed: 482913 })).toBe('v1.hard.482913');
-    expect(parseCode('v1.hard.482913')).toEqual({ preset: 'hard', seed: 482913 });
+    expect(formatCode({ preset: 'hard', seed: 482913 })).toBe('v2.hard.482913');
+    expect(parseCode('v2.hard.482913')).toEqual({ preset: 'hard', seed: 482913 });
   });
   it('is forgiving about case and whitespace', () => {
-    expect(parseCode('  V1.Easy.7 ')).toEqual({ preset: 'easy', seed: 7 });
+    expect(parseCode('  V2.Easy.7 ')).toEqual({ preset: 'easy', seed: 7 });
   });
   it('rejects malformed codes and other versions', () => {
     for (const bad of [
       '',
       'hard.1',
-      'v2.hard.1',
-      'v1.hard.',
-      'v1.hard.abc',
-      'v1.hard.99999999999',
+      'v1.hard.1',
+      'v2.hard.',
+      'v2.hard.abc',
+      'v2.hard.99999999999',
     ]) {
       expect(parseCode(bad)).toBeNull();
     }

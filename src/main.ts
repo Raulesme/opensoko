@@ -179,10 +179,7 @@ function startRandom(presetId: string, seed: number = randomSeed()): void {
   const preset = findPreset(presetId);
   if (!preset) return void ($('gen-status').textContent = `Unknown difficulty '${presetId}'.`);
   cancelGeneration();
-  const slow = preset.id === 'expert' ? ' This can take up to 30 seconds.' : '';
-  setGenerating(
-    `Generating ${/^[aeiou]/i.test(preset.name) ? 'an' : 'a'} ${preset.name} puzzle…${slow}`,
-  );
+  setGenerating(`Generating ${/^[aeiou]/i.test(preset.name) ? 'an' : 'a'} ${preset.name} puzzle…`);
   const w = new Worker(new URL('./generator/worker.ts', import.meta.url), { type: 'module' });
   worker = w;
   w.onmessage = (e: MessageEvent<WorkerResponse>) => {
@@ -212,8 +209,13 @@ function startRandom(presetId: string, seed: number = randomSeed()): void {
 
 function startFromCodeText(text: string): void {
   const code = parseCode(text);
+  if (!code && /^v\d+\./i.test(text.trim())) {
+    $('gen-status').textContent =
+      'That code is from a different version of the generator and cannot be reproduced.';
+    return;
+  }
   if (!code || !findPreset(code.preset)) {
-    $('gen-status').textContent = 'That is not a valid puzzle code (expected e.g. v1.hard.482913).';
+    $('gen-status').textContent = 'That is not a valid puzzle code (expected e.g. v2.hard.482913).';
     return;
   }
   startRandom(code.preset, code.seed);
@@ -376,7 +378,7 @@ window.addEventListener('resize', () => renderer.fit());
 
 setupRandomUi();
 
-// A shared link like #p=v1.hard.482913 opens that puzzle directly. Read it before showMenu(),
+// A shared link like #p=v2.hard.482913 opens that puzzle directly. Read it before showMenu(),
 // which clears the hash.
 const shared = /^#p=(.+)$/.exec(location.hash);
 showMenu();

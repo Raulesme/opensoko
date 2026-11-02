@@ -77,6 +77,39 @@ export const ADVANCED_NAMES = [
 ];
 
 /** Render curated picks as a TypeScript source file for src/levels/generated.ts. */
+export const MASTER_NAMES = [
+  'Foothold',
+  'Pinch Point',
+  'Crossed Wires',
+  'Hard Shoulder',
+  'Switchgear',
+  'Tight Squeeze',
+  'Slow Burn',
+  'Stranglehold',
+  'Pressure Valve',
+  'Fault Line',
+  'Long Division',
+  'Dead Reckoning',
+  'Knife Edge',
+  'Overload',
+  'Cold Iron',
+  'Pitfall',
+  'Black Ice',
+  'Chain Reaction',
+  'Undercurrent',
+  'Rock Bottom',
+  'Last Resort',
+  'Point of No Return',
+  'Gordian',
+  'Redline',
+  'Whiteout',
+  'Hairpin',
+  'Endgame',
+  'Zugzwang',
+  'Checkmate',
+  'Apex',
+];
+
 export interface PackOptions {
   seeds: string;
   /** Exported constant name, e.g. GENERATED_LEVELS. */

@@ -1,6 +1,7 @@
-/** Shareable puzzle codes like `v1.hard.482913`: version, difficulty preset and seed. */
+/** Shareable puzzle codes like `v2.hard.482913`: version, difficulty preset and seed. */
 
-export const CODE_VERSION = 'v1';
+/** v2: difficulty is measured by the interaction-aware `challenge` score (v1 used raw length). */
+export const CODE_VERSION = 'v2';
 
 export interface PuzzleCode {
   preset: string;
