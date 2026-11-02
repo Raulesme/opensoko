@@ -1,5 +1,5 @@
-import { DIRECTION_DELTAS } from '../src/game';
-import type { Direction, Level } from '../src/game';
+import { DIRECTION_DELTAS } from '../game';
+import type { Direction, Level } from '../game';
 
 const DIRS: readonly Direction[] = ['up', 'down', 'left', 'right'];
 

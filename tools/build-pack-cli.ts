@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import { buildPackSource } from './build-pack';
-import type { Scored } from './curate';
+import { buildPackSource } from '../src/generator/build-pack';
+import type { Scored } from '../src/generator/curate';
 
 function arg(name: string, fallback: string): string {
   const i = process.argv.indexOf(`--${name}`);

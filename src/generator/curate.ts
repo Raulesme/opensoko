@@ -2,16 +2,13 @@
  * Pick a difficulty-ramped, varied selection from generated candidates.
  *   npx vite-node tools/curate-cli.ts --in a.json,b.json --count 35 --out picks.json
  */
-import { canonical } from './generate';
+import { canonical, difficulty } from './generate';
 import type { Candidate } from './generate';
+
+export { difficulty };
 
 export interface Scored extends Candidate {
   score: number;
-}
-
-/** Higher = harder. Pushes and search effort both matter; effort is log-scaled. */
-export function difficulty(c: Candidate): number {
-  return c.minPushes + 4 * Math.log2(c.states + 1);
 }
 
 /** Layout quality gate: reject boring (huge open) or trivial candidates. */

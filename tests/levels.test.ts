@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Game, parseLevel } from '../src/game';
 import { BUILTIN_LEVELS } from '../src/levels/builtin';
-import { pushesToMoves, solvePushes } from '../tools/solver';
+import { pushesToMoves, solvePushes } from '../src/generator/solver';
 
 describe('built-in levels', () => {
   BUILTIN_LEVELS.forEach((entry) => {

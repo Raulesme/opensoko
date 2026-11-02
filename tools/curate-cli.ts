@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import { curate } from './curate';
-import type { Candidate } from './generate';
+import { curate } from '../src/generator/curate';
+import type { Candidate } from '../src/generator/generate';
 
 function arg(name: string, fallback: string): string {
   const i = process.argv.indexOf(`--${name}`);

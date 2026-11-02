@@ -6,7 +6,7 @@
  * then measures difficulty. Usage:
  *   npx vite-node tools/generate-cli.ts --seed 1 --attempts 2000 --out candidates.json
  */
-import { levelToString, parseLevel } from '../src/game';
+import { levelToString, parseLevel } from '../game';
 import { solvePushes } from './solver';
 
 export interface Candidate {
@@ -112,33 +112,36 @@ function largestRegion(w: number, h: number, floor: boolean[]): boolean[] {
   return out;
 }
 
-/** Reverse-play from a solved position; returns box cells and the player cell. */
-function scramble(
-  rng: Rng,
-  w: number,
-  floor: boolean[],
-  boxCount: number,
-  pulls: number,
-): { goals: number[]; boxes: number[]; player: number } | null {
+/** A reverse-play state: where the goals are, where the boxes have been pulled to, and the player. */
+export interface PullState {
+  goals: number[];
+  boxes: number[];
+  player: number;
+}
+
+/** Start from a solved position: boxes on goals, player somewhere else. */
+function initialState(rng: Rng, floor: boolean[], boxCount: number): PullState | null {
   const cells: number[] = [];
   floor.forEach((f, i) => f && cells.push(i));
   if (cells.length < boxCount + 6) return null;
-
   const goals: number[] = [];
   while (goals.length < boxCount) {
     const c = pick(rng, cells);
     if (!goals.includes(c)) goals.push(c);
   }
-  const boxes = [...goals];
   const free = cells.filter((c) => !goals.includes(c));
-  let player = pick(rng, free);
+  return { goals, boxes: [...goals], player: pick(rng, free) };
+}
 
+/** Pull boxes around for `pulls` more steps (mutates `state`). Resumable, so it can be extended. */
+function pullMore(rng: Rng, w: number, floor: boolean[], state: PullState, pulls: number): void {
+  const { boxes } = state;
   const D = [-1, 1, -w, w];
   let last: { box: number; e: number } | null = null;
   for (let step = 0; step < pulls; step++) {
     // Reachable region for the player.
-    const seen = new Set<number>([player]);
-    const stack = [player];
+    const seen = new Set<number>([state.player]);
+    const stack = [state.player];
     while (stack.length > 0) {
       const c = stack.pop()!;
       for (const d of D) {
@@ -168,10 +171,9 @@ function scramble(
     const o: (typeof options)[number] =
       same.length > 0 && rng() < 0.55 ? pick(rng, same) : pick(rng, options);
     boxes[o.box] = o.q;
-    player = o.q - o.e;
+    state.player = o.q - o.e;
     last = { box: o.box, e: o.e };
   }
-  return { goals, boxes, player };
 }
 
 /** Smallest text among the 8 rotations/reflections, used to drop duplicate layouts. */
@@ -195,85 +197,155 @@ export function canonical(text: string): string {
   return variants.sort()[0]!;
 }
 
-export function generate(seed: number, attempts: number): Candidate[] {
+/** Higher = harder. Pushes and search effort both matter; effort is log-scaled. */
+export function difficulty(c: Pick<Candidate, 'minPushes' | 'states'>): number {
+  return c.minPushes + 4 * Math.log2(c.states + 1);
+}
+
+/** Render a pull state as level text, keeping only walls that touch the floor and cropping. */
+function render(room: { w: number; h: number }, floor: boolean[], s: PullState) {
+  const { w, h } = room;
+  const touchesFloor = (i: number) => {
+    const x = i % w;
+    const y = Math.floor(i / w);
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < w && ny < h && floor[ny * w + nx]) return true;
+      }
+    }
+    return false;
+  };
+  const used = floor.map((f, i) => f || touchesFloor(i));
+  let minX = w;
+  let maxX = -1;
+  let minY = h;
+  let maxY = -1;
+  used.forEach((u, i) => {
+    if (!u) return;
+    minX = Math.min(minX, i % w);
+    maxX = Math.max(maxX, i % w);
+    minY = Math.min(minY, Math.floor(i / w));
+    maxY = Math.max(maxY, Math.floor(i / w));
+  });
+  const cw = maxX - minX + 1;
+  const ch = maxY - minY + 1;
+  const remap = (i: number) => (Math.floor(i / w) - minY) * cw + ((i % w) - minX);
+  const walls: boolean[] = new Array<boolean>(cw * ch).fill(false);
+  const goalGrid: boolean[] = new Array<boolean>(cw * ch).fill(false);
+  used.forEach((u, i) => {
+    if (u && !floor[i]) walls[remap(i)] = true;
+  });
+  s.goals.forEach((g) => (goalGrid[remap(g)] = true));
+  const text = levelToString({
+    width: cw,
+    height: ch,
+    walls,
+    goals: goalGrid,
+    boxes: s.boxes.map(remap),
+    player: remap(s.player),
+  });
+  return { text, width: cw, height: ch };
+}
+
+/** Solve a rendered state and measure it; null if it is invalid, unsolvable or too big. */
+function evaluate(
+  rendered: { text: string; width: number; height: number },
+  floorCells: number,
+  boxCount: number,
+  maxStates: number,
+): Candidate | null {
+  let parsed;
+  try {
+    parsed = parseLevel(rendered.text);
+  } catch {
+    return null;
+  }
+  const result = solvePushes(parsed, maxStates);
+  if (!result) return null;
+  return {
+    text: rendered.text,
+    boxes: boxCount,
+    width: rendered.width,
+    height: rendered.height,
+    floorCells,
+    minPushes: result.pushes.length,
+    states: result.states,
+  };
+}
+
+export interface GenOptions {
+  /** Box counts to choose from (repeat a value to weight it). */
+  boxes: readonly number[];
+  /** Pulls per box for the initial scramble: [min, max]. */
+  pullsPerBox: readonly [number, number];
+  /** Hill-climb rounds: extend the scramble and keep it only if the level got harder. */
+  hill: number;
+  /** Extra pulls per hill-climb round: [min, max]. */
+  hillPulls: readonly [number, number];
+  /** Give up on candidates whose solution search exceeds this many states. */
+  maxStates: number;
+}
+
+export const DEFAULT_OPTIONS: GenOptions = {
+  boxes: [2, 2, 3, 3, 3, 4, 4, 5],
+  pullsPerBox: [60, 90],
+  hill: 0,
+  hillPulls: [10, 30],
+  maxStates: 150_000,
+};
+
+/** One generation attempt: random room, scramble, optional hill-climb. Null if it fails. */
+export function generateOne(rng: Rng, opts: GenOptions = DEFAULT_OPTIONS): Candidate | null {
+  const room = makeRoom(rng);
+  const floor = largestRegion(room.w, room.h, room.floor);
+  const floorCells = floor.filter(Boolean).length;
+  const boxCount = pick(rng, opts.boxes);
+  const state = initialState(rng, floor, boxCount);
+  if (!state) return null;
+  pullMore(
+    rng,
+    room.w,
+    floor,
+    state,
+    int(rng, opts.pullsPerBox[0], opts.pullsPerBox[1]) * boxCount,
+  );
+
+  const valid = (s: PullState) => !s.boxes.some((b) => s.goals.includes(b));
+  if (!valid(state)) return null;
+  let best = evaluate(render(room, floor, state), floorCells, boxCount, opts.maxStates);
+  if (!best) return null;
+
+  for (let round = 0; round < opts.hill; round++) {
+    const next: PullState = { goals: state.goals, boxes: [...state.boxes], player: state.player };
+    pullMore(rng, room.w, floor, next, int(rng, opts.hillPulls[0], opts.hillPulls[1]));
+    if (!valid(next)) continue;
+    const cand = evaluate(render(room, floor, next), floorCells, boxCount, opts.maxStates);
+    if (cand && difficulty(cand) > difficulty(best)) {
+      best = cand;
+      state.boxes = next.boxes;
+      state.player = next.player;
+    }
+  }
+  return best;
+}
+
+export function generate(
+  seed: number,
+  attempts: number,
+  opts: GenOptions = DEFAULT_OPTIONS,
+): Candidate[] {
   const rng = mulberry32(seed);
   const out: Candidate[] = [];
   const seenLayouts = new Set<string>();
-
   for (let n = 0; n < attempts; n++) {
-    const room = makeRoom(rng);
-    const floor = largestRegion(room.w, room.h, room.floor);
-    const boxCount = pick(rng, [2, 2, 3, 3, 3, 4, 4, 5]);
-    const s = scramble(rng, room.w, floor, boxCount, int(rng, 60, 90) * boxCount);
-    if (!s) continue;
-    // No box may start on a goal.
-    if (s.boxes.filter((b) => s.goals.includes(b)).length > 0) continue;
-
-    // Keep only walls that touch the playable area (classic look), then crop to their bounds.
-    const { w, h } = room;
-    const touchesFloor = (i: number) => {
-      const x = i % w;
-      const y = Math.floor(i / w);
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          const nx = x + dx;
-          const ny = y + dy;
-          if (nx >= 0 && ny >= 0 && nx < w && ny < h && floor[ny * w + nx]) return true;
-        }
-      }
-      return false;
-    };
-    const used = floor.map((f, i) => f || touchesFloor(i));
-    let minX = w;
-    let maxX = -1;
-    let minY = h;
-    let maxY = -1;
-    used.forEach((u, i) => {
-      if (!u) return;
-      minX = Math.min(minX, i % w);
-      maxX = Math.max(maxX, i % w);
-      minY = Math.min(minY, Math.floor(i / w));
-      maxY = Math.max(maxY, Math.floor(i / w));
-    });
-    const cw = maxX - minX + 1;
-    const ch = maxY - minY + 1;
-    const remap = (i: number) => (Math.floor(i / w) - minY) * cw + ((i % w) - minX);
-    const walls: boolean[] = new Array<boolean>(cw * ch).fill(false);
-    const goalGrid: boolean[] = new Array<boolean>(cw * ch).fill(false);
-    used.forEach((u, i) => {
-      if (u && !floor[i]) walls[remap(i)] = true;
-    });
-    s.goals.forEach((g) => (goalGrid[remap(g)] = true));
-    const level = {
-      width: cw,
-      height: ch,
-      walls,
-      goals: goalGrid,
-      boxes: s.boxes.map(remap),
-      player: remap(s.player),
-    };
-    const text = levelToString(level);
-    const key = canonical(text);
+    const cand = generateOne(rng, opts);
+    if (!cand) continue;
+    const key = canonical(cand.text);
     if (seenLayouts.has(key)) continue;
-
-    let parsed;
-    try {
-      parsed = parseLevel(text);
-    } catch {
-      continue;
-    }
-    const result = solvePushes(parsed, 150_000);
-    if (!result) continue;
     seenLayouts.add(key);
-    out.push({
-      text,
-      boxes: boxCount,
-      width: cw,
-      height: ch,
-      floorCells: floor.filter(Boolean).length,
-      minPushes: result.pushes.length,
-      states: result.states,
-    });
+    out.push(cand);
   }
   return out;
 }
