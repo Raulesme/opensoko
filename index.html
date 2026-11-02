@@ -15,6 +15,7 @@
     </div>
     <section id="select" class="select" hidden>
       <h1>OpenSoko</h1>
+      <p class="how-to"><button id="how-to" type="button">How to play</button></p>
       <div id="packs"></div>
       <section class="pack" aria-labelledby="random-title">
         <div class="pack-header">
@@ -45,6 +46,7 @@
         <span id="pushes">Pushes: 0</span>
         <span id="par">Par: 0</span>
       </header>
+      <p id="tutorial-text" class="tutorial-text" hidden></p>
       <p id="help-status" class="help-status" role="status"></p>
       <main id="stage">
         <canvas id="game"></canvas>
@@ -63,6 +65,7 @@
         <button id="restart" type="button">Restart (R)</button>
         <button id="hint" type="button">Hint (H)</button>
         <button id="solve" type="button">Show solution</button>
+        <button id="skip-tutorial" type="button" hidden>Skip tutorial</button>
         <button id="share" type="button" hidden>Copy link</button>
       </footer>
     </div>

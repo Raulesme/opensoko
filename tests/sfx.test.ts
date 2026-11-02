@@ -117,8 +117,12 @@ describe('settings', () => {
 
   it('round-trips the mute preference', () => {
     const s = store();
-    expect(saveSettings(s, { muted: true })).toBe(true);
-    expect(loadSettings(s)).toEqual({ muted: true });
+    expect(saveSettings(s, { muted: true, tutorialDone: true })).toBe(true);
+    expect(loadSettings(s)).toEqual({ muted: true, tutorialDone: true });
+  });
+
+  it('loads settings saved before the tutorial existed, defaulting it to not done', () => {
+    expect(loadSettings(store('{"muted":true}'))).toEqual({ muted: true, tutorialDone: false });
   });
 
   it('falls back to defaults for missing, corrupt or inaccessible storage', () => {

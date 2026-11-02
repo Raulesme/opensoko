@@ -256,3 +256,22 @@ button:disabled {
 .controls {
   flex-wrap: wrap;
 }
+
+.how-to {
+  margin: 0 0 1rem;
+}
+
+.tutorial-text {
+  margin: 0.25rem auto 0.25rem;
+  width: calc(100% - 2rem);
+  max-width: 34rem;
+  padding: 0.5rem 0.9rem;
+  border-left: 3px solid var(--accent);
+  background: #1c1d36;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.tutorial-text[hidden] {
+  display: none;
+}
