@@ -1,5 +1,10 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import { ADVANCED_NAMES, buildPackSource, STARTER_NAMES } from '../src/generator/build-pack';
+import {
+  ADVANCED_NAMES,
+  buildPackSource,
+  MASTER_NAMES,
+  STARTER_NAMES,
+} from '../src/generator/build-pack';
 import type { Scored } from '../src/generator/curate';
 
 function arg(name: string, fallback: string): string {
@@ -8,15 +13,30 @@ function arg(name: string, fallback: string): string {
 }
 
 const picks = JSON.parse(readFileSync(arg('in', 'picks.json'), 'utf8')) as Scored[];
-const advanced = arg('pack', 'starter') === 'advanced';
+const pack = arg('pack', 'starter');
+const config = {
+  starter: {
+    constName: 'GENERATED_LEVELS',
+    idPrefix: 'gen',
+    names: STARTER_NAMES,
+    title: 'Procedurally generated levels',
+  },
+  advanced: {
+    constName: 'ADVANCED_LEVELS',
+    idPrefix: 'adv',
+    names: ADVANCED_NAMES,
+    title: 'Harder procedurally generated levels',
+  },
+  master: {
+    constName: 'MASTER_LEVELS',
+    idPrefix: 'mst',
+    names: MASTER_NAMES,
+    title: 'Very hard levels found by local search (tools/climb-cli.ts)',
+  },
+}[pack];
+if (!config) throw new Error(`Unknown pack '${pack}' (use starter, advanced or master)`);
 writeFileSync(
   arg('out', 'src/levels/generated.ts'),
-  buildPackSource(picks, {
-    seeds: arg('seeds', '?'),
-    constName: advanced ? 'ADVANCED_LEVELS' : 'GENERATED_LEVELS',
-    idPrefix: advanced ? 'adv' : 'gen',
-    names: advanced ? ADVANCED_NAMES : STARTER_NAMES,
-    title: advanced ? 'Harder procedurally generated levels' : 'Procedurally generated levels',
-  }),
+  buildPackSource(picks, { seeds: arg('seeds', '?'), ...config }),
 );
 console.log(`wrote ${picks.length} levels`);

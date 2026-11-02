@@ -1,5 +1,6 @@
 import { ADVANCED_LEVELS } from './advanced';
 import { BUILTIN_LEVELS } from './builtin';
+import { MASTER_LEVELS } from './master';
 import type { LevelEntry } from './types';
 
 export interface LevelPack {
@@ -22,6 +23,12 @@ export const PACKS: readonly LevelPack[] = [
     name: 'Advanced',
     description: 'Tight rooms, more crates, and plenty of ways to get stuck.',
     levels: ADVANCED_LEVELS,
+  },
+  {
+    id: 'master',
+    name: 'Master',
+    description: "Long forced sequences where every crate is in another crate's way.",
+    levels: MASTER_LEVELS,
   },
 ].filter((p) => p.levels.length > 0);
 
