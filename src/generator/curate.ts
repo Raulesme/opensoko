@@ -2,10 +2,10 @@
  * Pick a difficulty-ramped, varied selection from generated candidates.
  *   npx vite-node tools/curate-cli.ts --in a.json,b.json --count 35 --out picks.json
  */
-import { canonical, difficulty } from './generate';
+import { canonical, challenge } from './generate';
 import type { Candidate } from './generate';
 
-export { difficulty };
+export { challenge };
 
 export interface Scored extends Candidate {
   score: number;
@@ -28,9 +28,9 @@ export function curate(all: Candidate[], count: number, minDifficulty = 0): Scor
   const pool: Scored[] = [];
   for (const c of all) {
     const key = canonical(c.text);
-    if (seen.has(key) || !isAcceptable(c) || difficulty(c) < minDifficulty) continue;
+    if (seen.has(key) || !isAcceptable(c) || challenge(c) < minDifficulty) continue;
     seen.add(key);
-    pool.push({ ...c, score: difficulty(c) });
+    pool.push({ ...c, score: challenge(c) });
   }
   pool.sort((a, b) => a.score - b.score);
   if (pool.length <= count) return pool;
