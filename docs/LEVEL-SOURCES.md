@@ -22,19 +22,16 @@ with the original author.
   plus 35 generated), Advanced (35 generated) and Master (30, improved by local search; see
   `docs/GENERATOR.md`). The generator is our own code, so these levels carry no third-party licence.
   Each is checked solvable, with its par verified, by the test-suite solver.
-- A draft permission request for Microban is in `docs/PERMISSION-REQUEST-SKINNER.md`
-  (not sent yet).
 
-## Recommended path
+## Decision
 
-0. Alonso-del-Arte's sets are the first thing to ask about: the author appears to have
-   made them personally, so a permission or relicensing request is straightforward.
-1. Ship **original levels** (written by us, MIT/CC-BY compatible) as the starter set.
-2. Email David W. Skinner (contact details on his Sokoban page, linked from the
-   [ticalc.org archive](https://www.ticalc.org/archives/files/authors/53/5316.html)) asking
-   for permission to bundle Microban with attribution. Record the reply here.
-3. Optionally support **player-imported level files** (`.txt`/`.sok` in the standard format)
-   so users can load any set they own without us redistributing it.
+We are **not pursuing third-party level sets** (Microban included). The bundled original levels are
+the level base, and the research table above is kept only as a record of what was checked and why
+nothing was bundled. If third-party levels are ever reconsidered, get explicit written permission
+first and record it here.
+
+Optional idea: let players load their own `.txt`/`.sok` level files (standard format) so they can
+play any set they own without us redistributing it.
 
 ## Sources consulted
 
