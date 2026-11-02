@@ -4,6 +4,9 @@ import { DIRECTION_DELTAS, Game, parseLevel } from './game';
 import type { Direction } from './game';
 import { attachInput } from './input/attach';
 import type { Action } from './input/actions';
+import { formatCode, parseCode, randomSeed } from './generator/code';
+import { PRESETS, findPreset } from './generator/presets';
+import type { WorkerRequest, WorkerResponse } from './generator/worker';
 import { PACKS } from './levels/packs';
 import { rating, starString } from './levels/rating';
 import type { LevelEntry } from './levels/types';
@@ -48,6 +51,8 @@ interface Session {
   index: number;
   /** Ranked sessions save best scores to progress; others (random puzzles) do not. */
   ranked: boolean;
+  /** Set for random puzzles: the difficulty to use for "another puzzle" and the share code. */
+  random?: { preset: string; code: string };
 }
 
 let view: 'menu' | 'play' = 'menu';
@@ -84,6 +89,8 @@ function currentEntry(): LevelEntry {
 
 function showMenu(): void {
   stopAnimation();
+  cancelGeneration();
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
   view = 'menu';
   $('play').hidden = true;
   $('select').hidden = false;
@@ -138,9 +145,103 @@ function showMenu(): void {
   (focus ?? container.querySelector<HTMLElement>('button'))?.focus();
 }
 
-function startSession(levels: readonly LevelEntry[], index: number, ranked: boolean): void {
-  session = { levels, index, ranked };
+function startSession(
+  levels: readonly LevelEntry[],
+  index: number,
+  ranked: boolean,
+  random?: Session['random'],
+): void {
+  session = { levels, index, ranked, random };
   loadCurrent();
+}
+
+// --- Random puzzles -------------------------------------------------------------------------
+
+let worker: Worker | null = null;
+
+function setGenerating(label: string | null): void {
+  const busy = label !== null;
+  $('gen-status').textContent = label ?? '';
+  $('gen-cancel').hidden = !busy;
+  document
+    .querySelectorAll<HTMLButtonElement>('#difficulty-buttons button, #code-form button')
+    .forEach((b) => (b.disabled = busy));
+}
+
+function cancelGeneration(): void {
+  worker?.terminate();
+  worker = null;
+  setGenerating(null);
+}
+
+/** Generate in a Web Worker so the page stays responsive, then start playing the result. */
+function startRandom(presetId: string, seed: number = randomSeed()): void {
+  const preset = findPreset(presetId);
+  if (!preset) return void ($('gen-status').textContent = `Unknown difficulty '${presetId}'.`);
+  cancelGeneration();
+  setGenerating(`Generating a ${preset.name} puzzle…`);
+  const w = new Worker(new URL('./generator/worker.ts', import.meta.url), { type: 'module' });
+  worker = w;
+  w.onmessage = (e: MessageEvent<WorkerResponse>) => {
+    w.terminate();
+    if (worker === w) worker = null;
+    setGenerating(null);
+    if (!e.data.ok) return void ($('gen-status').textContent = e.data.error);
+    const code = formatCode({ preset: preset.id, seed });
+    const entry: LevelEntry = {
+      id: `random:${code}`,
+      name: `${preset.name} #${seed}`,
+      par: e.data.par,
+      text: e.data.text,
+    };
+    startSession([entry], 0, false, { preset: preset.id, code });
+    history.replaceState(null, '', `#p=${code}`);
+  };
+  w.onerror = () => {
+    w.terminate();
+    worker = null;
+    setGenerating(null);
+    $('gen-status').textContent = 'Puzzle generation failed. Please try again.';
+  };
+  const request: WorkerRequest = { seed, preset: preset.id };
+  w.postMessage(request);
+}
+
+function startFromCodeText(text: string): void {
+  const code = parseCode(text);
+  if (!code || !findPreset(code.preset)) {
+    $('gen-status').textContent = 'That is not a valid puzzle code (expected e.g. v1.hard.482913).';
+    return;
+  }
+  startRandom(code.preset, code.seed);
+}
+
+function setupRandomUi(): void {
+  const row = $('difficulty-buttons');
+  for (const preset of PRESETS) {
+    const button = Object.assign(document.createElement('button'), {
+      type: 'button',
+      textContent: preset.name,
+    });
+    button.addEventListener('click', () => startRandom(preset.id));
+    row.append(button);
+  }
+  $('code-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    startFromCodeText($<HTMLInputElement>('code').value);
+  });
+  $('gen-cancel').addEventListener('click', cancelGeneration);
+  $('share').addEventListener('click', async () => {
+    if (!session?.random) return;
+    const url = `${location.origin}${location.pathname}#p=${session.random.code}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      $('share').textContent = 'Copied!';
+    } catch {
+      $('share').textContent = session.random.code; // fall back to showing the code
+    }
+    setTimeout(() => ($('share').textContent = 'Copy link'), 2000);
+  });
 }
 
 function loadCurrent(): void {
@@ -170,7 +271,12 @@ function refresh(): void {
   $('par').textContent = `Par: ${entry.par}`;
   // Hold the win overlay back until the last move has finished sliding.
   $('win').hidden = !game.isWon || anim !== null;
-  $('next').textContent = session.index + 1 < session.levels.length ? 'Next level' : 'Back to menu';
+  $('share').hidden = !session.random;
+  $('next').textContent = session.random
+    ? 'Another puzzle'
+    : session.index + 1 < session.levels.length
+      ? 'Next level'
+      : 'Back to menu';
 }
 
 function onWin(g: Game): void {
@@ -195,6 +301,7 @@ function onWin(g: Game): void {
 
 function nextLevel(): void {
   if (!session) return;
+  if (session.random) return startRandom(session.random.preset);
   if (session.index + 1 < session.levels.length) {
     session.index++;
     loadCurrent();
@@ -264,4 +371,10 @@ window.addEventListener('keydown', (e) => {
 });
 window.addEventListener('resize', () => renderer.fit());
 
+setupRandomUi();
+
+// A shared link like #p=v1.hard.482913 opens that puzzle directly. Read it before showMenu(),
+// which clears the hash.
+const shared = /^#p=(.+)$/.exec(location.hash);
 showMenu();
+if (shared) startFromCodeText(decodeURIComponent(shared[1]!));

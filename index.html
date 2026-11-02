@@ -14,6 +14,26 @@
     <section id="select" class="select" hidden>
       <h1>OpenSoko</h1>
       <div id="packs"></div>
+      <section class="pack" aria-labelledby="random-title">
+        <div class="pack-header">
+          <h2 id="random-title">Random puzzle</h2>
+          <span class="desc">A fresh puzzle every time. Share its code or link with a friend.</span>
+        </div>
+        <div class="random-row" id="difficulty-buttons"></div>
+        <form class="random-row" id="code-form">
+          <input
+            id="code"
+            type="text"
+            placeholder="Puzzle code, e.g. v1.hard.482913"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Puzzle code"
+          />
+          <button type="submit">Play code</button>
+        </form>
+        <p id="gen-status" class="gen-status" role="status"></p>
+        <button id="gen-cancel" type="button" hidden>Cancel</button>
+      </section>
     </section>
     <div id="play" class="play" hidden>
       <header class="hud">
@@ -38,6 +58,7 @@
       <footer class="controls">
         <button id="undo" type="button">Undo (Z)</button>
         <button id="restart" type="button">Restart (R)</button>
+        <button id="share" type="button" hidden>Copy link</button>
       </footer>
     </div>
     <script type="module" src="/src/main.ts"></script>
