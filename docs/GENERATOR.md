@@ -57,9 +57,33 @@ keeping an edit when the level stays solvable and the challenge score does not d
   (e.g. 59 -> 120 with 26 blocker pushes and 11 away pushes). `tools/climb-cli.ts` uses it to build
   the Master pack from the best sampled candidates.
 
+## Experiment: how many optimal solutions does a level have?
+
+`solutions.ts` keeps the whole graph of _optimal_ solutions (not just one) and measures how much
+freedom the player has: number of optimal push sequences, `width` (average optimal positions per
+step; 1 means a single narrow line) and `forcedFraction` (share of optimal positions with exactly
+one optimal next push). Run `npm run levels:solutions -- master` to print them for a pack. It is
+roughly 2-4x slower than the solver, so it is an offline tool, not used by the game.
+
+Findings on the 105 bundled levels (depth agrees with the solver's par on all of them):
+
+- **The raw numbers are mostly size.** Median log10(solutions) rises from 2.8 (Starter) to 6.8
+  (Advanced) to 13.1 (Master), and correlates 0.86 with push count: independent pushes can be done in
+  any order, so longer levels with more boxes have astronomically many orderings. Forced fraction
+  falls with size (-0.66 vs floor cells).
+- **A real signal remains once size is controlled.** Among 4-5 box levels with 34-44 floor cells,
+  forced fraction still ranges 0-45% and width spans over two orders of magnitude, only weakly tied
+  to blocker cost (0.17). Cramped levels with boxes jammed into pockets have a narrow solution graph
+  (width ~6-60); open rooms with clustered boxes have a very wide one (width 200-1200).
+- **Open question:** does tight play feel better? That needs human judgement. Matched pairs (same
+  box count, similar size, length and blocker cost) were picked for playtesting:
+  `mst-28` vs `mst-24`, `mst-09` vs `mst-07`, `mst-17` vs `mst-22`, `adv-23` vs `adv-30`
+  (first of each pair is the tight one).
+- Not wired into the presets or curation yet. If tightness proves worth it, the sensible use is as a
+  size-adjusted preference when choosing pack levels, not as an absolute threshold.
+
 ## Ideas not tried yet
 
-- Count optimal solutions (unique-solution puzzles feel more designed).
 - Count dead-end states reachable by natural play (how easy it is to get stuck).
 - A smarter move set for the climb (e.g. only moves that keep the search size bounded).
 - Non-rectangular boards or new tile types.
