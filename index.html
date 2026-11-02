@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>OpenSoko</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <button id="mute" class="mute" type="button">Sound: on (M)</button>
+    </div>
+    <section id="select" class="select" hidden>
+      <h1>OpenSoko</h1>
+      <div id="packs"></div>
+      <section class="pack" aria-labelledby="random-title">
+        <div class="pack-header">
+          <h2 id="random-title">Random puzzle</h2>
+          <span class="desc">A fresh puzzle every time. Share its code or link with a friend.</span>
+        </div>
+        <div class="random-row" id="difficulty-buttons"></div>
+        <form class="random-row" id="code-form">
+          <input
+            id="code"
+            type="text"
+            placeholder="Puzzle code, e.g. v1.hard.482913"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Puzzle code"
+          />
+          <button type="submit">Play code</button>
+        </form>
+        <p id="gen-status" class="gen-status" role="status"></p>
+        <button id="gen-cancel" type="button" hidden>Cancel</button>
+      </section>
+    </section>
+    <div id="play" class="play" hidden>
+      <header class="hud">
+        <button id="menu" type="button">Menu (Esc)</button>
+        <span id="level">Level 1</span>
+        <span id="moves">Moves: 0</span>
+        <span id="pushes">Pushes: 0</span>
+        <span id="par">Par: 0</span>
+      </header>
+      <main id="stage">
+        <canvas id="game"></canvas>
+        <div id="win" class="win" hidden>
+          <p class="win-title">Level complete!</p>
+          <p id="win-stars" class="win-stars" aria-label="Rating"></p>
+          <p id="win-stats" class="win-stats"></p>
+          <div class="win-actions">
+            <button id="replay" type="button">Replay</button>
+            <button id="next" type="button">Next level</button>
+          </div>
+        </div>
+      </main>
+      <footer class="controls">
+        <button id="undo" type="button">Undo (Z)</button>
+        <button id="restart" type="button">Restart (R)</button>
+        <button id="share" type="button" hidden>Copy link</button>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
