@@ -10,6 +10,10 @@ export interface Push {
   dir: Direction;
 }
 
+/** Why a solve ended: found a solution, proved there is none, or gave up at the state budget. */
+export type SolveOutcome =
+  { status: 'solved'; result: SolveResult } | { status: 'unsolvable' } | { status: 'budget' };
+
 export interface SolveResult {
   /** A solution with the fewest box pushes (not necessarily fewest player moves). */
   pushes: Push[];
@@ -81,7 +85,7 @@ function zobristTable(size: number, seed: number): Int32Array {
  * player can reach), packed into one 53-bit number. Search order and pruning are identical to the
  * original implementation, so `states` and the solution length are unchanged.
  */
-export function solvePushes(level: Level, maxStates = 400_000): SolveResult | null {
+export function solveDetailed(level: Level, maxStates = 400_000): SolveOutcome {
   const nb = buildNeighbours(level);
   const size = level.walls.length;
   const walls = Uint8Array.from(level.walls, (v) => (v ? 1 : 0));
@@ -137,7 +141,7 @@ export function solvePushes(level: Level, maxStates = 400_000): SolveResult | nu
     for (let i = 0; i < B; i++) if (!goals[boxPool[off + i]!]) return false;
     return true;
   };
-  if (onGoals(0)) return { pushes: [], states: 1 };
+  if (onGoals(0)) return { status: 'solved', result: { pushes: [], states: 1 } };
 
   // One array serves as wall map, box map and flood 'visited' marks: a cell can be entered only
   // while vis[cell] < stamp. Walls and (during a node's expansion) boxes hold BLOCKED, which never
@@ -212,7 +216,7 @@ export function solvePushes(level: Level, maxStates = 400_000): SolveResult | nu
     }
 
     if (seen.add(hash1[idx]! ^ p1[min]!, hash2[idx]! ^ p2[min]!)) {
-      if (seen.size > maxStates) return null;
+      if (seen.size > maxStates) return { status: 'budget' };
 
       for (let bi = 0; bi < B; bi++) {
         const b = boxPool[off + bi]!;
@@ -247,7 +251,7 @@ export function solvePushes(level: Level, maxStates = 400_000): SolveResult | nu
             for (let p = child; parent[p]! >= 0; p = parent[p]!) {
               pushes.push({ from: pushFrom[p]!, dir: DIRS[pushDir[p]!]! });
             }
-            return { pushes: pushes.reverse(), states: seen.size };
+            return { status: 'solved', result: { pushes: pushes.reverse(), states: seen.size } };
           }
           count++;
         }
@@ -256,7 +260,14 @@ export function solvePushes(level: Level, maxStates = 400_000): SolveResult | nu
     // Release the boxes' cells so they can be entered again by later floods.
     for (let i = 0; i < B; i++) vis[boxPool[off + i]!] = 0;
   }
-  return null;
+  // The whole reachable space was searched without finding a solution.
+  return { status: 'unsolvable' };
+}
+
+/** Breadth-first search over pushes. Returns null if unsolvable or if maxStates is exceeded. */
+export function solvePushes(level: Level, maxStates = 400_000): SolveResult | null {
+  const outcome = solveDetailed(level, maxStates);
+  return outcome.status === 'solved' ? outcome.result : null;
 }
 
 /** Expand a push solution into the full list of player moves (walking between pushes). */

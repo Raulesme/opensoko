@@ -16,7 +16,7 @@ npm run build    # typecheck + production build into dist/
 
 ## Controls
 
-Arrows / WASD move, Z undo, R restart, Esc menu, M mute. On touch screens, swipe to move.
+Arrows / WASD move, Z undo, R restart, H hint, Esc menu, M mute. On touch screens, swipe to move.
 Best moves and pushes per level are saved in your browser's localStorage.
 
 ## Level generator
@@ -32,6 +32,18 @@ npm run levels:pack -- --in picks.json --out src/levels/generated.ts --seeds "21
 ```
 
 The current pack (35 generated levels after 5 hand-made intro levels) came from seeds 21-24.
+
+## Help when you're stuck
+
+The solver that checks every level also helps you play (it runs in a Web Worker, so the page never
+freezes):
+
+- **Hint (H):** outlines the box to push next and shows which way it goes. The hint follows your
+  own play, so it stays valid as long as you keep following it.
+- **Stuck warning:** if the current position can no longer be solved, a red note appears so you can
+  undo. Obvious dead boxes are caught instantly; subtler deadlocks are proven by a background check.
+- **Show solution:** plays the optimal solution from where you are. Any key or tap stops it. A level
+  finished this way is marked as solved with help and does not save a score.
 
 ## Sound
 

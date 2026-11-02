@@ -5,7 +5,8 @@ export type Action =
   | { type: 'undo' }
   | { type: 'restart' }
   | { type: 'menu' }
-  | { type: 'mute' };
+  | { type: 'mute' }
+  | { type: 'hint' };
 
 const KEY_ACTIONS: Readonly<Record<string, Action>> = {
   ArrowUp: { type: 'move', dir: 'up' },
@@ -21,6 +22,7 @@ const KEY_ACTIONS: Readonly<Record<string, Action>> = {
   r: { type: 'restart' },
   Escape: { type: 'menu' },
   m: { type: 'mute' },
+  h: { type: 'hint' },
 };
 
 /** Map a KeyboardEvent.key value to a game action (letters are case-insensitive). */

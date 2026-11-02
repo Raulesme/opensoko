@@ -1,7 +1,8 @@
-import { reachableFloor } from '../game';
+import { DIRECTION_DELTAS, reachableFloor } from '../game';
 import type { Direction, Game } from '../game';
 import { cellXY, frameIndex, progress, slidePosition } from './animation';
 import type { MoveAnimation } from './animation';
+import type { NextPush } from '../help/plan';
 import { TILE } from './sprites';
 import type { SpriteAtlas } from './sprites';
 
@@ -48,7 +49,12 @@ export class Renderer {
   }
 
   /** Draw the board. While `anim` is set the player (and any pushed box) slide between cells. */
-  draw(facing: Direction = 'down', anim: MoveAnimation | null = null, now = 0): void {
+  draw(
+    facing: Direction = 'down',
+    anim: MoveAnimation | null = null,
+    now = 0,
+    hint: NextPush | null = null,
+  ): void {
     const game = this.game;
     if (!game) return;
     const { level } = game;
@@ -88,5 +94,40 @@ export class Renderer {
     const inset = (TILE - sprite.width) / 2;
     const insetY = (TILE - sprite.height) / 2;
     ctx.drawImage(sprite, Math.round(pos.x * TILE + inset), Math.round(pos.y * TILE + insetY));
+
+    if (hint && !anim) this.drawHint(hint);
+  }
+
+  /** Highlight the box to push and an arrow on the cell it should move to. */
+  private drawHint(hint: NextPush): void {
+    const { ctx } = this;
+    const width = this.game!.level.width;
+    const at = (cell: number) => ({
+      x: (cell % width) * TILE,
+      y: Math.floor(cell / width) * TILE,
+    });
+    const from = at(hint.from);
+    const to = at(hint.to);
+    ctx.save();
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(from.x + 1, from.y + 1, TILE - 2, TILE - 2);
+
+    // An arrow pointing the way the box will move, centred on the target cell.
+    const cx = to.x + TILE / 2;
+    const cy = to.y + TILE / 2;
+    const d = DIRECTION_DELTAS[hint.dir];
+    const r = TILE * 0.32;
+    ctx.fillStyle = 'rgba(255, 209, 102, 0.9)';
+    ctx.strokeStyle = '#14152a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx + d.x * r, cy + d.y * r);
+    ctx.lineTo(cx - d.x * r + d.y * r, cy - d.y * r + d.x * r);
+    ctx.lineTo(cx - d.x * r - d.y * r, cy - d.y * r - d.x * r);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
 }
