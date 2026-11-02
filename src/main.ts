@@ -4,7 +4,7 @@ import { DIRECTION_DELTAS, Game, parseLevel } from './game';
 import type { Direction } from './game';
 import { attachInput } from './input/attach';
 import type { Action } from './input/actions';
-import { formatCode, parseCode, randomSeed } from './generator/code';
+import { CODE_VERSION, codeVersion, formatCode, parseCode, randomSeed } from './generator/code';
 import { PRESETS, findPreset } from './generator/presets';
 import type { WorkerRequest, WorkerResponse } from './generator/worker';
 import { SolveClient } from './help/client';
@@ -224,7 +224,7 @@ function startRandom(presetId: string, seed: number = randomSeed()): void {
     const code = formatCode({ preset: preset.id, seed });
     const entry: LevelEntry = {
       id: `random:${code}`,
-      name: `${preset.name} #${seed}`,
+      name: `${preset.name} ${code}`,
       par: e.data.par,
       text: e.data.text,
     };
@@ -243,13 +243,16 @@ function startRandom(presetId: string, seed: number = randomSeed()): void {
 
 function startFromCodeText(text: string): void {
   const code = parseCode(text);
-  if (!code && /^v\d+\./i.test(text.trim())) {
+  if (!code) {
+    const version = codeVersion(text);
     $('gen-status').textContent =
-      'That code is from a different version of the generator and cannot be reproduced.';
+      version !== null && version !== CODE_VERSION
+        ? 'That code is from a different version of the generator and cannot be reproduced.'
+        : 'That is not a valid puzzle code (expected something like 2h1a2b3c).';
     return;
   }
-  if (!code || !findPreset(code.preset)) {
-    $('gen-status').textContent = 'That is not a valid puzzle code (expected e.g. v2.hard.482913).';
+  if (!findPreset(code.preset)) {
+    $('gen-status').textContent = 'That code uses a difficulty this version does not have.';
     return;
   }
   startRandom(code.preset, code.seed);
@@ -454,7 +457,7 @@ window.addEventListener('resize', () => renderer.fit());
 
 setupRandomUi();
 
-// A shared link like #p=v2.hard.482913 opens that puzzle directly. Read it before showMenu(),
+// A shared link like #p=2h1a2b3c opens that puzzle directly. Read it before showMenu(),
 // which clears the hash.
 const shared = /^#p=(.+)$/.exec(location.hash);
 showMenu();

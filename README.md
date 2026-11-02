@@ -62,7 +62,8 @@ frequency, length or gain there to change how it sounds. Mute state is saved in 
 
 The menu's **Random puzzle** section generates a fresh level in the browser (in a Web Worker, so the
 page stays responsive) at Easy, Medium, Hard or Expert. Generation is deterministic: a puzzle is
-identified by a code like `v2.hard.482913` (generator version, difficulty, seed). "Copy link" shares
+identified by a short code like `2h1a2b3c` (one digit for the generator version, one letter for the
+difficulty, the seed in base 36). The longer `v2.hard.482913` form is also accepted. "Copy link" shares
 `#p=<code>` and anyone opening it gets the identical level. Difficulty is measured by the solver (see
 `src/generator/presets.ts` and `src/generator/metrics.ts`): besides length it counts how many pushes boxes
 force on each other ("blocker cost") and counter-intuitive away pushes, so Hard and Expert levels are
