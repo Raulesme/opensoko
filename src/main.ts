@@ -7,6 +7,9 @@ import type { Action } from './input/actions';
 import { formatCode, parseCode, randomSeed } from './generator/code';
 import { PRESETS, findPreset } from './generator/presets';
 import type { WorkerRequest, WorkerResponse } from './generator/worker';
+import { SolveClient } from './help/client';
+import type { WorkerLike } from './help/client';
+import { Help } from './help/controller';
 import { PACKS } from './levels/packs';
 import { rating, starString } from './levels/rating';
 import type { LevelEntry } from './levels/types';
@@ -64,6 +67,18 @@ let rafId = 0;
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+/** Hints, the "stuck" warning and solution playback; the solver runs in a Web Worker. */
+const help = new Help({
+  client: new SolveClient(
+    () =>
+      new Worker(new URL('./help/worker.ts', import.meta.url), {
+        type: 'module',
+      }) as unknown as WorkerLike,
+  ),
+  applyMove: (dir) => handle({ type: 'move', dir }, true),
+  changed: () => refresh(),
+});
+
 /** Redraw every frame while a move is sliding; stop (and show the win overlay) when it ends. */
 function tick(now: number): void {
   rafId = 0;
@@ -73,7 +88,7 @@ function tick(now: number): void {
     refresh();
     return;
   }
-  renderer.draw(facing, anim, now);
+  renderer.draw(facing, anim, now, help.hint);
   rafId = requestAnimationFrame(tick);
 }
 
@@ -263,12 +278,12 @@ function loadCurrent(): void {
   $('select').hidden = true;
   $('play').hidden = false;
   renderer.setGame(game); // after un-hiding so the canvas can measure its container
-  refresh();
+  help.setGame(game);
 }
 
 function refresh(): void {
   if (!game || !session) return;
-  renderer.draw(facing, anim, performance.now());
+  renderer.draw(facing, anim, performance.now(), help.hint);
   const entry = currentEntry();
   $('level').textContent = `${entry.name} (${session.index + 1}/${session.levels.length})`;
   $('moves').textContent = `Moves: ${game.moves}`;
@@ -276,6 +291,11 @@ function refresh(): void {
   $('par').textContent = `Par: ${entry.par}`;
   // Hold the win overlay back until the last move has finished sliding.
   $('win').hidden = !game.isWon || anim !== null;
+  const status = $('help-status');
+  status.textContent = help.status;
+  status.classList.toggle('warn', help.stuck);
+  $<HTMLButtonElement>('hint').disabled = game.isWon;
+  $<HTMLButtonElement>('solve').disabled = game.isWon;
   $('share').hidden = !session.random;
   $('next').textContent = session.random
     ? 'Another puzzle'
@@ -288,10 +308,12 @@ function onWin(g: Game): void {
   const entry = currentEntry();
   const flag = (isNew: boolean) => (isNew ? ' (new best!)' : '');
   const stars = rating(g.pushes, entry.par);
-  $('win-stars').textContent = starString(stars);
+  $('win-stars').textContent = help.assisted ? '' : starString(stars);
 
   let line = `Moves: ${g.moves} · Pushes: ${g.pushes} (par ${entry.par})`;
-  if (session!.ranked) {
+  if (help.assisted) {
+    line = 'Solved with help, so no score was saved.';
+  } else if (session!.ranked) {
     const result = recordCompletion(progress, entry.id, g.moves, g.pushes);
     progress = result.progress;
     saveProgress(storage, progress);
@@ -313,10 +335,12 @@ function nextLevel(): void {
   } else showMenu();
 }
 
-function handle(action: Action): void {
+function handle(action: Action, fromAutoplay = false): void {
   if (action.type === 'mute') return toggleMute();
   if (view !== 'play' || !game) return;
+  if (!fromAutoplay) help.stopAutoplay(); // any manual input takes over from the solution playback
   if (action.type === 'menu') return showMenu();
+  if (action.type === 'hint') return void help.requestHint();
   stopAnimation(); // a new input snaps any slide in progress to its end
   const wasWon = game.isWon;
   if (action.type === 'move') {
@@ -330,6 +354,7 @@ function handle(action: Action): void {
       const boxTo = game.playerIndex + d.y * game.level.width + d.x;
       sfx.play(game.level.goals[boxTo] ? 'goal' : 'push');
     }
+    if (result.moved) help.onMove(action.dir);
     if (result.moved && !reducedMotion.matches) {
       anim = makeMoveAnimation({
         now: performance.now(),
@@ -343,10 +368,14 @@ function handle(action: Action): void {
       rafId = requestAnimationFrame(tick);
     }
   } else if (action.type === 'undo') {
-    if (game.undo()) sfx.play('undo');
+    if (game.undo()) {
+      sfx.play('undo');
+      help.onReset();
+    }
   } else {
     game.restart();
     sfx.play('restart');
+    help.onReset();
   }
   if (!wasWon && game.isWon) {
     onWin(game);
@@ -362,6 +391,11 @@ $('menu').addEventListener('click', () => handle({ type: 'menu' }));
 $('undo').addEventListener('click', () => handle({ type: 'undo' }));
 $('restart').addEventListener('click', () => handle({ type: 'restart' }));
 $('replay').addEventListener('click', () => handle({ type: 'restart' }));
+$('hint').addEventListener('click', () => handle({ type: 'hint' }));
+$('solve').addEventListener('click', () => {
+  help.stopAutoplay();
+  void help.startSolution();
+});
 $('next').addEventListener('click', nextLevel);
 window.addEventListener('keydown', (e) => {
   // A focused button already handles Enter itself via its click handler.
@@ -374,6 +408,9 @@ window.addEventListener('keydown', (e) => {
     nextLevel();
   }
 });
+// Any key press or tap takes over from the solution playback.
+window.addEventListener('keydown', () => help.stopAutoplay());
+$('stage').addEventListener('pointerdown', () => help.stopAutoplay());
 window.addEventListener('resize', () => renderer.fit());
 
 setupRandomUi();

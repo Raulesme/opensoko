@@ -240,3 +240,19 @@ button:disabled {
   opacity: 0.5;
   cursor: progress;
 }
+
+.help-status {
+  min-height: 1.4rem;
+  margin: 0;
+  padding: 0 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.help-status.warn {
+  color: #ff8c8c;
+}
+
+.controls {
+  flex-wrap: wrap;
+}
