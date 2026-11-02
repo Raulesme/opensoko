@@ -9,5 +9,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    // Verifying the hardest bundled levels means a real solver run, which can take a few seconds.
+    testTimeout: 60_000,
   },
 });

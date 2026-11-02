@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import { buildPackSource } from '../src/generator/build-pack';
+import { ADVANCED_NAMES, buildPackSource, STARTER_NAMES } from '../src/generator/build-pack';
 import type { Scored } from '../src/generator/curate';
 
 function arg(name: string, fallback: string): string {
@@ -8,5 +8,15 @@ function arg(name: string, fallback: string): string {
 }
 
 const picks = JSON.parse(readFileSync(arg('in', 'picks.json'), 'utf8')) as Scored[];
-writeFileSync(arg('out', 'src/levels/generated.ts'), buildPackSource(picks, arg('seeds', '?')));
+const advanced = arg('pack', 'starter') === 'advanced';
+writeFileSync(
+  arg('out', 'src/levels/generated.ts'),
+  buildPackSource(picks, {
+    seeds: arg('seeds', '?'),
+    constName: advanced ? 'ADVANCED_LEVELS' : 'GENERATED_LEVELS',
+    idPrefix: advanced ? 'adv' : 'gen',
+    names: advanced ? ADVANCED_NAMES : STARTER_NAMES,
+    title: advanced ? 'Harder procedurally generated levels' : 'Procedurally generated levels',
+  }),
+);
 console.log(`wrote ${picks.length} levels`);

@@ -23,12 +23,12 @@ export function isAcceptable(c: Candidate): boolean {
 }
 
 /** Choose `count` candidates spread evenly across the difficulty range. */
-export function curate(all: Candidate[], count: number): Scored[] {
+export function curate(all: Candidate[], count: number, minDifficulty = 0): Scored[] {
   const seen = new Set<string>();
   const pool: Scored[] = [];
   for (const c of all) {
     const key = canonical(c.text);
-    if (seen.has(key) || !isAcceptable(c)) continue;
+    if (seen.has(key) || !isAcceptable(c) || difficulty(c) < minDifficulty) continue;
     seen.add(key);
     pool.push({ ...c, score: difficulty(c) });
   }

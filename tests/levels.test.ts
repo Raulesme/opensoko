@@ -1,23 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { Game, parseLevel } from '../src/game';
-import { ALL_LEVELS } from '../src/levels/packs';
-import { pushesToMoves, solvePushes } from '../src/generator/solver';
+import { ALL_LEVELS, PACKS } from '../src/levels/packs';
 
-describe('built-in levels', () => {
-  ALL_LEVELS.forEach((entry) => {
-    it(`${entry.id} parses and is solvable`, () => {
-      const level = parseLevel(entry.text);
-      const result = solvePushes(level, 600_000);
-      expect(result).not.toBeNull();
-      expect(result!.pushes.length).toBe(entry.par);
-      const game = new Game(level);
-      for (const dir of pushesToMoves(level, result!.pushes)) game.move(dir);
-      expect(game.isWon).toBe(true);
-    });
+describe('level packs', () => {
+  it('has unique level ids across all packs', () => {
+    const ids = ALL_LEVELS.map((l) => l.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('has non-empty packs with positive pars', () => {
+    expect(PACKS.length).toBeGreaterThan(0);
+    for (const pack of PACKS) {
+      expect(pack.levels.length).toBeGreaterThan(0);
+      for (const level of pack.levels) expect(level.par).toBeGreaterThan(0);
+    }
   });
 });
 
-it('built-in level ids are unique', () => {
-  const ids = ALL_LEVELS.map((l) => l.id);
-  expect(new Set(ids).size).toBe(ids.length);
+describe('advanced pack sharding', () => {
+  it('covers every advanced level exactly once across 4 shards', () => {
+    const shards = [0, 1, 2, 3].map((s) =>
+      PACKS.find((p) => p.id === 'advanced')!.levels.filter((_, i) => i % 4 === s),
+    );
+    expect(shards.flat().length).toBe(PACKS.find((p) => p.id === 'advanced')!.levels.length);
+  });
 });

@@ -9,7 +9,7 @@ function arg(name: string, fallback: string): string {
 
 const inputs = arg('in', '').split(',').filter(Boolean);
 const all = inputs.flatMap((f) => JSON.parse(readFileSync(f, 'utf8')) as Candidate[]);
-const picks = curate(all, Number(arg('count', '35')));
+const picks = curate(all, Number(arg('count', '35')), Number(arg('min-difficulty', '0')));
 writeFileSync(arg('out', 'picks.json'), JSON.stringify(picks, null, 2));
 console.log(`pool ${all.length} -> picked ${picks.length}`);
 for (const p of picks) {
