@@ -286,6 +286,10 @@ export interface GenOptions {
   hillPulls: readonly [number, number];
   /** Give up on candidates whose solution search exceeds this many states. */
   maxStates: number;
+  /** Skip rooms with fewer floor cells than this (cheap early filter; bigger rooms are harder). */
+  minFloorCells?: number;
+  /** Skip rooms with more floor cells than this (very open rooms overshoot a difficulty band). */
+  maxFloorCells?: number;
 }
 
 export const DEFAULT_OPTIONS: GenOptions = {
@@ -302,6 +306,8 @@ export function generateOne(rng: Rng, opts: GenOptions = DEFAULT_OPTIONS): Candi
   const floor = largestRegion(room.w, room.h, room.floor);
   const floorCells = floor.filter(Boolean).length;
   const boxCount = pick(rng, opts.boxes);
+  if (floorCells < (opts.minFloorCells ?? 0)) return null;
+  if (floorCells > (opts.maxFloorCells ?? Infinity)) return null;
   const state = initialState(rng, floor, boxCount);
   if (!state) return null;
   pullMore(

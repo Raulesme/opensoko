@@ -16,6 +16,8 @@ body {
 }
 
 body {
+  display: flex;
+  flex-direction: column;
   background: var(--bg);
   color: var(--fg);
   font-family: ui-monospace, 'Courier New', monospace;
@@ -78,7 +80,8 @@ button:focus-visible {
 }
 
 .play {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -94,6 +97,10 @@ button:focus-visible {
 }
 
 .select {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
   max-width: 40rem;
   margin: 0 auto;
   padding: 1rem;
@@ -189,11 +196,13 @@ button:focus-visible {
   margin: 0;
 }
 
+.topbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 0.5rem 0;
+}
+
 .mute {
-  position: fixed;
-  top: 0.5rem;
-  right: 0.5rem;
-  z-index: 10;
   padding: 0.35rem 0.6rem;
   font-size: 0.75rem;
 }
