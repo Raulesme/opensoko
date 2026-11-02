@@ -103,6 +103,17 @@ export interface GeneratedPuzzle {
   attempts: number;
 }
 
+/** Does this level meet the preset's difficulty band and interaction gates? */
+export function satisfies(c: Candidate, preset: Preset): boolean {
+  const score = challenge(c);
+  return (
+    score >= preset.minChallenge &&
+    score < preset.maxChallenge &&
+    c.excess >= preset.minExcess &&
+    c.away >= preset.minAway
+  );
+}
+
 /**
  * Deterministically generate a puzzle for a preset and seed: the same inputs always yield the same
  * level (for a given generator version), so a short code can share a puzzle.
@@ -112,15 +123,7 @@ export function generateForPreset(seed: number, preset: Preset): GeneratedPuzzle
   for (let attempt = 1; attempt <= preset.maxAttempts; attempt++) {
     const candidate = generateOne(rng, preset.options);
     if (!candidate || !isAcceptable(candidate)) continue;
-    const c = challenge(candidate);
-    if (
-      c >= preset.minChallenge &&
-      c < preset.maxChallenge &&
-      candidate.excess >= preset.minExcess &&
-      candidate.away >= preset.minAway
-    ) {
-      return { candidate, attempts: attempt };
-    }
+    if (satisfies(candidate, preset)) return { candidate, attempts: attempt };
   }
   return null;
 }

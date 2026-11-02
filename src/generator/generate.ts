@@ -39,9 +39,9 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
-type Rng = () => number;
-const int = (rng: Rng, lo: number, hi: number) => lo + Math.floor(rng() * (hi - lo + 1));
-const pick = <T>(rng: Rng, arr: readonly T[]): T => arr[Math.floor(rng() * arr.length)]!;
+export type Rng = () => number;
+export const int = (rng: Rng, lo: number, hi: number) => lo + Math.floor(rng() * (hi - lo + 1));
+export const pick = <T>(rng: Rng, arr: readonly T[]): T => arr[Math.floor(rng() * arr.length)]!;
 
 /** true = floor. Outer ring is always wall. */
 function makeRoom(rng: Rng): { w: number; h: number; floor: boolean[] } {
@@ -269,7 +269,7 @@ function render(room: { w: number; h: number }, floor: boolean[], s: PullState) 
 }
 
 /** Solve a rendered state and measure it; null if it is invalid, unsolvable or too big. */
-function evaluate(
+export function evaluate(
   rendered: { text: string; width: number; height: number },
   floorCells: number,
   boxCount: number,
