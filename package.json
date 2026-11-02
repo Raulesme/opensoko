@@ -16,7 +16,8 @@
     "format:check": "prettier --check .",
     "levels:generate": "vite-node tools/generate-cli.ts",
     "levels:curate": "vite-node tools/curate-cli.ts",
-    "levels:pack": "vite-node tools/build-pack-cli.ts"
+    "levels:pack": "vite-node tools/build-pack-cli.ts",
+    "bench:solver": "vite-node tools/bench-solver.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

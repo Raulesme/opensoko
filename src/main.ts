@@ -179,10 +179,7 @@ function startRandom(presetId: string, seed: number = randomSeed()): void {
   const preset = findPreset(presetId);
   if (!preset) return void ($('gen-status').textContent = `Unknown difficulty '${presetId}'.`);
   cancelGeneration();
-  const slow = preset.id === 'expert' ? ' This can take up to 30 seconds.' : '';
-  setGenerating(
-    `Generating ${/^[aeiou]/i.test(preset.name) ? 'an' : 'a'} ${preset.name} puzzle…${slow}`,
-  );
+  setGenerating(`Generating ${/^[aeiou]/i.test(preset.name) ? 'an' : 'a'} ${preset.name} puzzle…`);
   const w = new Worker(new URL('./generator/worker.ts', import.meta.url), { type: 'module' });
   worker = w;
   w.onmessage = (e: MessageEvent<WorkerResponse>) => {
