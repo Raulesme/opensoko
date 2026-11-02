@@ -12,6 +12,7 @@ import type { WorkerLike } from './help/client';
 import { Help } from './help/controller';
 import { PACKS } from './levels/packs';
 import { rating, starString } from './levels/rating';
+import { TUTORIAL_STEPS, tutorialEntries } from './tutorial/steps';
 import type { LevelEntry } from './levels/types';
 import { isFinished, makeMoveAnimation, MOVE_MS } from './render/animation';
 import type { MoveAnimation } from './render/animation';
@@ -56,6 +57,8 @@ interface Session {
   ranked: boolean;
   /** Set for random puzzles: the difficulty to use for "another puzzle" and the share code. */
   random?: { preset: string; code: string };
+  /** True for the first-time tutorial: lessons are never scored and show a caption. */
+  tutorial?: boolean;
 }
 
 let view: 'menu' | 'play' = 'menu';
@@ -66,6 +69,8 @@ let anim: MoveAnimation | null = null;
 let rafId = 0;
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+/** Phones and tablets: tutorial wording talks about swiping and tapping instead of keys. */
+const touchDevice = window.matchMedia('(pointer: coarse)').matches;
 
 /** Hints, the "stuck" warning and solution playback; the solver runs in a Web Worker. */
 const help = new Help({
@@ -102,7 +107,20 @@ function currentEntry(): LevelEntry {
   return session!.levels[session!.index]!;
 }
 
+function startTutorial(): void {
+  startSession(tutorialEntries(), 0, false, undefined, true);
+}
+
+/** Mark the tutorial as seen so it is not offered automatically again. */
+function finishTutorial(goToMenu: boolean): void {
+  settings.tutorialDone = true;
+  saveSettings(storage, settings);
+  session = null;
+  if (goToMenu) showMenu();
+}
+
 function showMenu(): void {
+  if (session?.tutorial) finishTutorial(false);
   stopAnimation();
   cancelGeneration();
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
@@ -165,8 +183,9 @@ function startSession(
   index: number,
   ranked: boolean,
   random?: Session['random'],
+  tutorial = false,
 ): void {
-  session = { levels, index, ranked, random };
+  session = { levels, index, ranked, random, tutorial };
   loadCurrent();
 }
 
@@ -285,7 +304,16 @@ function refresh(): void {
   if (!game || !session) return;
   renderer.draw(facing, anim, performance.now(), help.hint);
   const entry = currentEntry();
-  $('level').textContent = `${entry.name} (${session.index + 1}/${session.levels.length})`;
+  $('level').textContent = session.tutorial
+    ? `Lesson ${session.index + 1}/${session.levels.length}: ${entry.name}`
+    : `${entry.name} (${session.index + 1}/${session.levels.length})`;
+  const caption = $('tutorial-text');
+  caption.hidden = !session.tutorial;
+  if (session.tutorial) {
+    const step = TUTORIAL_STEPS[session.index]!;
+    caption.textContent = touchDevice ? step.caption.touch : step.caption.keys;
+  }
+  $('skip-tutorial').hidden = !session.tutorial;
   $('moves').textContent = `Moves: ${game.moves}`;
   $('pushes').textContent = `Pushes: ${game.pushes}`;
   $('par').textContent = `Par: ${entry.par}`;
@@ -299,12 +327,21 @@ function refresh(): void {
   $('share').hidden = !session.random;
   $('next').textContent = session.random
     ? 'Another puzzle'
-    : session.index + 1 < session.levels.length
-      ? 'Next level'
-      : 'Back to menu';
+    : session.tutorial
+      ? session.index + 1 < session.levels.length
+        ? 'Next lesson'
+        : 'Finish'
+      : session.index + 1 < session.levels.length
+        ? 'Next level'
+        : 'Back to menu';
 }
 
 function onWin(g: Game): void {
+  if (session!.tutorial) {
+    $('win-stars').textContent = '';
+    $('win-stats').textContent = 'Well done!';
+    return;
+  }
   const entry = currentEntry();
   const flag = (isNew: boolean) => (isNew ? ' (new best!)' : '');
   const stars = rating(g.pushes, entry.par);
@@ -397,6 +434,8 @@ $('solve').addEventListener('click', () => {
   void help.startSolution();
 });
 $('next').addEventListener('click', nextLevel);
+$('how-to').addEventListener('click', startTutorial);
+$('skip-tutorial').addEventListener('click', () => finishTutorial(true));
 window.addEventListener('keydown', (e) => {
   // A focused button already handles Enter itself via its click handler.
   if (
@@ -420,3 +459,7 @@ setupRandomUi();
 const shared = /^#p=(.+)$/.exec(location.hash);
 showMenu();
 if (shared) startFromCodeText(decodeURIComponent(shared[1]!));
+else if (!settings.tutorialDone && Object.keys(progress.levels).length === 0) {
+  // First visit: offer the tutorial straight away (it can be skipped).
+  startTutorial();
+}

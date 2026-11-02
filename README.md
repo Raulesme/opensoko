@@ -33,6 +33,13 @@ npm run levels:pack -- --in picks.json --out src/levels/generated.ts --seeds "21
 
 The current pack (35 generated levels after 5 hand-made intro levels) came from seeds 21-24.
 
+## Tutorial
+
+First-time players get a short, skippable five-lesson tutorial (push, walking around, several crates,
+undoing mistakes, and asking for help). It is never scored and the wording adapts to keys or touch.
+"How to play" on the menu replays it. The lessons live in `src/tutorial/steps.ts`; each is verified
+solvable with an exact par by the test suite.
+
 ## Help when you're stuck
 
 The solver that checks every level also helps you play (it runs in a Web Worker, so the page never
